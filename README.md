@@ -67,9 +67,9 @@ The kernel, DTB, DTBO (`prebuilt/`) and the modules in `recovery/root/lib/module
 
 ## Prebuilt TEE files
 
-The TEE daemons, the keymint, fkeymaster and weaver (hermesd) services, the gatekeeper module and their libraries in `recovery/root/vendor` come unmodified from the same stock firmware; `tee-files.txt` lists them with their checksums, the firmware and its patch levels. The gatekeeper service itself is AOSP's, built with the recovery. The trusted apps are not part of the tree: at boot, `prepare_tee.sh` copies them from the installed firmware.
+At boot, `prepare_tee.sh` takes the TEE from the installed firmware: the trusted apps, and the TEE daemons, the keymint, fkeymaster, gatekeeper and weaver (hermesd) services, the gatekeeper modules and their libraries listed in `recovery/root/vendor/etc/tee-files.list`. So they always match the firmware, SM-A155F or SM-A155M, of any date.
 
-To refresh them from a newer firmware (needed only if Samsung changes the TEE services), pull the files from a rooted phone running it and install them with the [builder](https://github.com/poqdavid/orangefox-a15-builder)'s tools; this also sets `PLATFORM_SECURITY_PATCH`:
+The copies in `recovery/root/vendor` are the fallback for anything the installed firmware lacks. They come unmodified from one stock firmware; `tee-files.txt` lists them with their checksums, that firmware and its patch levels. To refresh them and the list, pull the files from a rooted phone and install them with the [builder](https://github.com/poqdavid/orangefox-a15-builder)'s tools; this also sets `PLATFORM_SECURITY_PATCH`:
 
     tools/pull-tee-files.py tee-files
     tools/install-tee-files.py tee-files.zip --tree device/samsung/a15

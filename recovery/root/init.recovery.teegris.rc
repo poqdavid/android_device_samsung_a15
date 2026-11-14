@@ -7,8 +7,9 @@
 # keymint, fkeymaster, gatekeeper and hermesd scripts of the stock firmware.
 #
 # prepare_tee.sh first sets the version properties keymint reports to the
-# TEE to the installed firmware's values and copies its trusted apps; the
-# TEE is not started if it cannot read them.
+# TEE to the installed firmware's values and copies its trusted apps and its
+# TEE services and libraries (vendor/etc/tee-files.list); the TEE is not
+# started if it cannot read them.
 #
 # None of the services declares an "interface", so nothing restarts them
 # on demand once they are stopped.
@@ -107,8 +108,8 @@ service vendor.fkeymaster-default /vendor/bin/vendor.samsung.hardware.security.f
     disabled
     seclabel u:r:recovery:s0
 
-# AOSP's HIDL gatekeeper service (built with the recovery) on top of the
-# stock gatekeeper.mt6789.so module
+# the stock HIDL gatekeeper service; it loads its passthrough implementation
+# from /vendor/lib64/hw, which loads gatekeeper.mt6789.so
 service vendor.gatekeeper-1-0 /vendor/bin/hw/android.hardware.gatekeeper@1.0-service
     class hal
     user system

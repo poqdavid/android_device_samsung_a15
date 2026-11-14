@@ -19,7 +19,8 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # prepare_tee.sh start: let init start Samsung's TEE for /data decryption,
-#                       reporting the installed firmware's versions to it
+#                       with the installed firmware's TEE files, reporting
+#                       its versions
 # prepare_tee.sh stop:  stop the TEE services and release efs
 #
 # The /data keys are bound to the Android version, the OS patch level and
@@ -42,6 +43,7 @@ SYSTEM_DEV=/dev/block/mapper/system
 VENDOR_DEV=/dev/block/mapper/vendor
 SYSTEM_MNT=/mnt/tee_system
 VENDOR_MNT=/mnt/tee_vendor
+LIST=/vendor/etc/tee-files.list
 SERVICES="hermesd vendor.gatekeeper-1-0 vendor.fkeymaster-default vendor.keymint-default tzts_service tz_service"
 
 log() {
@@ -83,6 +85,41 @@ mount_ro() {
 		sleep 1
 	done
 	return 1
+}
+
+# copy_tee_files: the installed firmware's own TEE services and libraries
+# (tee-files.list) over the copies in the ramdisk, so they match its TEE;
+# the ramdisk copies stay for anything the firmware lacks
+copy_tee_files() {
+	[ -f "$LIST" ] || { log "no $LIST; using the TEE files in the ramdisk"; return; }
+	copied=0
+	kept=0
+	missing=""
+	while read -r f; do
+		case "$f" in
+			/vendor/*) ;;
+			*) continue ;;
+		esac
+		src="$VENDOR_MNT${f#/vendor}"
+		if [ -f "$src" ]; then
+			mkdir -p "${f%/*}"
+			if cp "$src" "$f.new" && mv -f "$f.new" "$f"; then
+				case "$f" in
+					*/bin/*) chmod 0755 "$f" ;;
+					*) chmod 0644 "$f" ;;
+				esac
+				copied=$((copied + 1))
+				continue
+			fi
+			rm -f "$f.new"
+		fi
+		if [ -f "$f" ]; then
+			kept=$((kept + 1))
+		else
+			missing="$missing ${f##*/}"
+		fi
+	done < "$LIST"
+	log "TEE files: $copied from the installed firmware, $kept from the ramdisk${missing:+, missing:$missing}"
 }
 
 start_tee() {
@@ -132,6 +169,8 @@ start_tee() {
 		rm -rf /vendor/tee
 		finish failed "copying the trusted apps failed; decryption off"
 	fi
+
+	copy_tee_files
 
 	finish ready "starting the TEE"
 }

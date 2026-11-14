@@ -8,10 +8,12 @@ vendor_security_patch=2025-08-01
 
 # sha256 tree-path phone-path
 8f520a243d0d094aa3db8f7d8578ad0058039c72a797b830b4bf9ebadb776bd8 recovery/root/vendor/bin/hermesd /vendor/bin/hermesd
+72d746ed823737d6f76789c15dad514a9d295f1292d22812dbb3cc781463afb9 recovery/root/vendor/bin/hw/android.hardware.gatekeeper@1.0-service /vendor/bin/hw/android.hardware.gatekeeper@1.0-service
 d6366c2ddecb93392a72801a2d627277c600c5b3ad9d8cc8c6e45f32079958ce recovery/root/vendor/bin/hw/android.hardware.security.keymint-service /vendor/bin/hw/android.hardware.security.keymint-service
 9583488925239c0df3c2f0e6efe9dcceacf146f6b47b8dbb8696735b53fc2fe5 recovery/root/vendor/bin/tzdaemon /vendor/bin/tzdaemon
 86124724d26a44f0c6bff7d25545c1df71dec50eb77cf700fb64684e573f2b52 recovery/root/vendor/bin/tzts_daemon /vendor/bin/tzts_daemon
 c7616024ceec36c06ff24371075c0583f4f6584222c354707b22456e123f37e2 recovery/root/vendor/bin/vendor.samsung.hardware.security.fkeymaster-service /vendor/bin/vendor.samsung.hardware.security.fkeymaster-service
+b6866f1bb2c1d8e33d094b2e286d9d00378d0a421d57f2c39c13ff760f8eb732 recovery/root/vendor/lib64/android.hardware.gatekeeper@1.0.so /vendor/lib64/android.hardware.gatekeeper@1.0.so
 a8141ce4a20685607e1c3456ae69c09fffaf1936bf7894102f13be6a2e760ed7 recovery/root/vendor/lib64/android.hardware.keymaster@3.0.so /vendor/lib64/android.hardware.keymaster@3.0.so
 2f5148555c6f0ae0fd44d8eae75f7f335b64f59be90a1697d78d56dc093e1d2e recovery/root/vendor/lib64/android.hardware.keymaster@4.0.so /vendor/lib64/android.hardware.keymaster@4.0.so
 e25bd9952bfcaf574aead94e3f9b3a8878b5a0fa852c1e603836c9e0550ca453 recovery/root/vendor/lib64/android.hardware.keymaster@4.1.so /vendor/lib64/android.hardware.keymaster@4.1.so

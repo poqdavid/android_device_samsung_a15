@@ -134,16 +134,6 @@ TW_USE_FSCRYPT_POLICY := 2
 TW_FORCE_KEYMASTER_VER := true
 TW_PREPARE_DATA_MEDIA_EARLY := true
 
-# AOSP's HIDL gatekeeper service and passthrough implementation, for the
-# stock gatekeeper.mt6789.so module (the stock service is the same AOSP one)
-TARGET_RECOVERY_DEVICE_MODULES += \
-    android.hardware.gatekeeper@1.0-service \
-    android.hardware.gatekeeper@1.0-impl
-TW_RECOVERY_ADDITIONAL_RELINK_VENDOR_HW_BINARY_FILES += \
-    $(TARGET_OUT_VENDOR_EXECUTABLES)/hw/android.hardware.gatekeeper@1.0-service
-TW_RECOVERY_ADDITIONAL_RELINK_LIBRARY_FILES += \
-    $(TARGET_OUT_VENDOR_SHARED_LIBRARIES)/hw/android.hardware.gatekeeper@1.0-impl.so
-
 # Properties of the stock vendor the keystore services read
 TARGET_VENDOR_PROP += $(DEVICE_PATH)/vendor.prop
 
