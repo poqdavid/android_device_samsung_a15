@@ -1,12 +1,70 @@
 #!/system/bin/sh
-set -e
+#
+# Stop the stock ROM from putting the stock recovery back.
+#
+# Samsung's install-recovery service rebuilds the recovery partition from
+# the boot image with a patch (recovery-from-boot.p) that only applies to an
+# unmodified stock boot image. Repacking boot with magiskboot changes its
+# checksum, so the patch no longer applies and OrangeFox stays installed.
+#
+# This is not needed if boot is already modified (Magisk, KernelSU, or a
+# custom kernel). Back up Boot from the Backup menu before running it.
+#
 
-echo "Disabling recovery restoration..."
-dd if=/dev/block/by-name/boot of=/tmp/old-boot.img
-mkdir -p /tmp/unpacked_boot
-cd /tmp/unpacked_boot
-magiskboot unpack -h /tmp/old-boot.img
-magiskboot repack /tmp/old-boot.img /tmp/new-boot.img
-cd -
-rm -rf /tmp/unpacked_boot
-dd if=/tmp/new-boot.img of=/dev/block/by-name/boot
+BOOT=/dev/block/by-name/boot
+WORK=/tmp/multidisabler
+
+log() {
+	echo "multidisabler: $*"
+}
+
+fail() {
+	log "error: $*"
+	log "boot was not modified"
+	exit 1
+}
+
+MAGISKBOOT=$(command -v magiskboot)
+for candidate in /system/bin/magiskboot /sbin/magiskboot; do
+	[ -n "$MAGISKBOOT" ] && break
+	[ -x "$candidate" ] && MAGISKBOOT="$candidate"
+done
+[ -n "$MAGISKBOOT" ] || fail "magiskboot not found"
+[ -b "$BOOT" ] || fail "$BOOT not found"
+
+rm -rf "$WORK"
+mkdir -p "$WORK" || fail "cannot create $WORK"
+cd "$WORK" || fail "cannot enter $WORK"
+
+log "reading boot"
+dd if="$BOOT" of=boot.img bs=1M 2>/dev/null || fail "cannot read $BOOT"
+
+log "repacking boot"
+"$MAGISKBOOT" unpack -h boot.img >/dev/null 2>&1 || fail "magiskboot unpack failed"
+"$MAGISKBOOT" repack boot.img new-boot.img >/dev/null 2>&1 || fail "magiskboot repack failed"
+[ -s new-boot.img ] || fail "repacked image is empty"
+
+if cmp -s boot.img new-boot.img; then
+	log "the repacked image is identical to the current one, boot was not changed"
+	log "the stock ROM may still restore the stock recovery; root or flash a custom kernel instead"
+	cd /
+	rm -rf "$WORK"
+	exit 2
+fi
+
+part_size=$(blockdev --getsize64 "$BOOT" 2>/dev/null)
+img_size=$(wc -c < new-boot.img)
+if [ -n "$part_size" ] && [ "$img_size" -gt "$part_size" ]; then
+	fail "repacked image ($img_size bytes) is larger than boot ($part_size bytes)"
+fi
+
+log "writing boot"
+if ! dd if=new-boot.img of="$BOOT" bs=1M conv=fsync 2>/dev/null; then
+	log "error: writing boot failed, restoring the original image"
+	dd if=boot.img of="$BOOT" bs=1M conv=fsync 2>/dev/null
+	exit 1
+fi
+
+cd /
+rm -rf "$WORK"
+log "done; the stock ROM will no longer restore the stock recovery"
