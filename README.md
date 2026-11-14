@@ -1,91 +1,112 @@
-# OrangeFox device tree for the Samsung Galaxy A15 (SM-A155F)
+## OrangeFox Recovery device tree for the Samsung Galaxy A15 (MediaTek)
 
-| Device          | Samsung Galaxy A15 (4G)                                   |
-|-----------------|-----------------------------------------------------------|
-| Codename        | a15                                                       |
-| Models          | SM-A155F                                                  |
-| SoC             | MediaTek Helio G99 (MT6789)                               |
-| CPU             | 2x Cortex-A76 @ 2.2 GHz + 6x Cortex-A55 @ 2.0 GHz         |
-| GPU             | Mali-G57 MC2                                              |
-| Display         | 6.5" Super AMOLED, 1080 x 2340, 90 Hz, Infinity-U cutout  |
-| Storage         | UFS 2.2                                                   |
-| Shipped Android | 14 (One UI 6.0)                                           |
-| Partitions      | A-only, dynamic (super), dedicated recovery partition     |
+The Galaxy A15 (SM-A155F - codenamed _"a15"_) is an entry-level smartphone from Samsung.
 
-Not for the Galaxy A15 5G (SM-A156x, `a15x`): different SoC, kernel and modules.
+It was announced and released in December 2023.
 
+This tree is for the 4G model only. The Galaxy A15 5G (SM-A156x, _"a15x"_) uses a different chipset and kernel.
+
+## Device specifications
+
+| Feature                        | Specification                                                                             |
+| -----------------------------: | :---------------------------------------------------------------------------------------- |
+| Chipset                        | MediaTek Helio G99 (MT6789, 6 nm)                                                         |
+| CPU                            | Octa-core (2x2.2 GHz Cortex-A76 & 6x2.0 GHz Cortex-A55)                                   |
+| GPU                            | Mali-G57 MC2                                                                              |
+| Memory                         | 4GB / 6GB / 8GB RAM                                                                       |
+| Shipped OS                     | Android 14 (One UI 6.0)                                                                   |
+| Storage                        | 128GB / 256GB                                                                             |
+| SIM                            | Nano-SIM or Nano-SIM + Nano-SIM                                                           |
+| MicroSD                        | microSDXC (uses shared SIM slot)                                                          |
+| Battery                        | 5000 mAh (non-removable), 25W fast charge                                                 |
+| Dimensions                     | 160.1 x 76.8 x 8.4 mm (6.30 x 3.02 x 0.33 in)                                             |
+| Display                        | 6.5 inches, 1080 x 2340, 19.5:9 ratio, Super AMOLED, 90Hz                                 |
+
+## Device picture
+
+<img src="https://fdn2.gsmarena.com/vv/bigpic/samsung-galaxy-a15-lte-.jpg" width="45%"/>
+
+---
+# Flashing
+## Flashing with an installed custom recovery (OrangeFox/TWRP):
+    * Download the OrangeFox zip installer file
+    * Reboot your device to your custom recovery
+    * Flash the OrangeFox zip installer (there will be an automatic reboot to OrangeFox after flashing)
+
+##  Flashing with Odin - only if there is no installed custom recovery:
+    * Ensure that your bootloader is unlocked
+    * Download the OrangeFox "tar" file
+    * Open Odin and untick "Auto Reboot"
+    * Reboot the device to download mode
+    * Flash the "tar" file to the "AP" slot in Odin
+    * Reboot to recovery, using the relevant hardware key combination (hold Volume Up + Power with a USB cable connected)
+    * Flash the OrangeFox zip installer from a MicroSD card, USB-OTG or with ADB sideload
+
+## Issues
+	* FBE decryption is not supported. Use a MicroSD card, USB-OTG or ADB sideload for files; internal storage is only readable after a "Format Data", until Android encrypts it again
+	* Settings are stored in the cache partition, so wiping cache resets them
+	* The flashlight is not supported
+	* The CPU temperature is not shown
+
+---
 ## Building
 
-This tree targets the `fox_12.1` manifest.
+This tree is for the fox_12.1 manifest.
 
-```bash
-mkdir -p ~/OrangeFox && cd ~/OrangeFox
-git clone https://gitlab.com/OrangeFox/sync.git
-cd sync
-./orangefox_sync.sh --branch 12.1 --path ~/OrangeFox/fox_12.1
+    . build/envsetup.sh
+    lunch twrp_a15-eng
+    mka adbd recoveryimage
 
-cd ~/OrangeFox/fox_12.1
-git clone <this repo> -b fox_12.1 device/samsung/a15
+## Prebuilt kernel and modules
 
-export FOX_BUILD_DEVICE=a15
-source build/envsetup.sh
-lunch twrp_a15-eng
-mka adbd recoveryimage
+The kernel, DTB, DTBO (`prebuilt/`) and the modules in `recovery/root/lib/modules` are taken unmodified from the stock recovery of firmware A155FXXS7CYG4 (kernel 5.10.226-android12-9-31117096). The touchscreen drivers (`zt7650m_ts.ko`, `focaltech_ts_ft3418.ko`), `tuihw-inf.ko` and the touch firmware come from `vendor_dlkm` and `vendor` of the same firmware. They must always be replaced together, from one firmware.
+
+---
+### Thanks to
+@[devhunter1](https://github.com/devhunter1)
+For the TWRP tree on which this one is based ([TeamWin/android_device_samsung_a15](https://github.com/TeamWin/android_device_samsung_a15))
+
+@[mylove90](https://github.com/mylove90) and Mohamed Saad
+For their fixes to that tree
+
+The OrangeFox trees for the Galaxy [A33 5G](https://gitlab.com/OrangeFox/device/a33x) and [A23 5G](https://gitlab.com/OrangeFox/device/a23xq)
+For the layout and scripts this tree follows
+
+### Kernel sources
+The recovery uses the stock kernel. Samsung publishes its source for the SM-A155F at [opensource.samsung.com](https://opensource.samsung.com); a buildable copy is available at [https://github.com/poqdavid/android_kernel_samsung_sma155f](https://github.com/poqdavid/android_kernel_samsung_sma155f)
+
+---
+## Copyright
+
 ```
-
-`FOX_BUILD_DEVICE` has to be exported before `build/envsetup.sh` is sourced,
-otherwise `vendorsetup.sh` skips the OrangeFox build vars and `BoardConfig.mk`
-stops the build.
-
-The output is `out/target/product/a15/OrangeFox-*.img` and the matching zip.
-The image already carries `SEANDROIDENFORCE` and an AVB hash footer
-(see `bootimg.mk`).
-
-## Installing
-
-Samsung has no fastboot, so the first install is done with Odin:
-
-1. Unlock the bootloader (OEM unlocking).
-2. Put the image in a tar (`tar -H ustar -cf OrangeFox.tar recovery.img`)
-   and flash it in Odin's AP slot with Auto Reboot unticked. If the phone
-   then refuses to boot recovery with a verification error, also flash a
-   `vbmeta` with verification disabled.
-3. Reboot straight into recovery: hold Volume Up + Power with a USB cable
-   connected.
-4. Keep OrangeFox installed: boot must not be the stock image when Android
-   starts, otherwise Samsung's install-recovery service restores the stock
-   recovery. Root (Magisk/KernelSU), flash a custom kernel, or run
-   `multidisabler` from the OrangeFox terminal.
-
-Later updates can be installed from OrangeFox itself (zip or image).
-
-## Known limitations
-
-- No /data decryption: Samsung keeps the FBE keys in TEEGRIS. Internal
-  storage is only readable between Format Data and the next Android boot,
-  which encrypts it again; use MicroSD, USB OTG or ADB sideload.
-- OrangeFox settings, themes and the recovery password are stored under
-  /sdcard/Fox, so they only persist while internal storage is readable.
-- Touch needs a stock-based ROM: the touchscreen drivers depend on
-  `tuihw-inf.ko`, which is not in the recovery ramdisk yet, so they are
-  loaded from the installed ROM's `vendor_dlkm`. With an empty or non-stock
-  `super`, use OrangeFox's hardware-key navigation (volume and power keys)
-  or adb.
-- No flashlight: the flash LED driver is not loaded in recovery.
-- No CPU temperature: the thermal modules are not loaded in recovery.
-
-## Prebuilts
-
-`prebuilt/kernel`, `prebuilt/dtb.img`, `prebuilt/dtbo.img` and the modules in
-`recovery/root/lib/modules` come from one stock SM-A155F recovery image
-(Android 14 firmware, kernel `5.10.198-android12-9-28575149`). The touch
-drivers in `recovery/root/vendor/lib/modules` come from the same firmware.
-Replace them together, from one firmware: the kernel only accepts modules
-whose symbol versions match it.
-
-## Credits
-
-- [TeamWin](https://github.com/TeamWin/android_device_samsung_a15) and
-  devhunter1 for the original TWRP tree, and mylove90 and Mohamed Saad for
-  their fixes to it
-- The [OrangeFox Recovery Project](https://gitlab.com/OrangeFox)
+#
+# Copyright (C) 2024 The TWRP Open Source Project
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#  *  Copyright (C) 2026 The OrangeFox Recovery Project
+#  *
+#  * This program is free software: you can redistribute it and/or modify
+#  * it under the terms of the GNU General Public License as published by
+#  * the Free Software Foundation, either version 3 of the License, or
+#  * (at your option) any later version.
+#  *
+#  * This program is distributed in the hope that it will be useful,
+#  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  * GNU General Public License for more details.
+#  *
+#  * You should have received a copy of the GNU General Public License
+#  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+```
