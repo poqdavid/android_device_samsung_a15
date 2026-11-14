@@ -63,6 +63,10 @@ if [ "$1" = "$FDEVICE" -o "$FOX_BUILD_DEVICE" = "$FDEVICE" ]; then
 
 	# mkboot/bootimg.mk already appends SEANDROIDENFORCE and the AVB footer,
 	# so FOX_USE_SAMSUNG_SPECIAL must stay unset
+
+	# no decryption - keep the settings on /cache (see runatboot.sh)
+	export FOX_SETTINGS_ROOT_DIRECTORY=/cache
+	export FOX_MISCELLANEOUS_ROOT_DIRECTORY=/cache
 else
 	if [ -z "$FOX_BUILD_DEVICE" -a -z "$BASH_SOURCE" ]; then
 		echo "I: This script requires bash. Not processing the $FDEVICE $(basename $0)"

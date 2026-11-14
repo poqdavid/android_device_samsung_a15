@@ -1,5 +1,8 @@
 #!/system/bin/sh
 #
+# Copyright (C) 2026 The OrangeFox Recovery Project
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
 # Stop the stock ROM from putting the stock recovery back.
 #
 # Samsung's install-recovery service rebuilds the recovery partition from
@@ -7,8 +10,9 @@
 # unmodified stock boot image. Repacking boot with magiskboot changes its
 # checksum, so the patch no longer applies and OrangeFox stays installed.
 #
-# This is not needed if boot is already modified (Magisk, KernelSU, or a
-# custom kernel). Back up Boot from the Backup menu before running it.
+# postrecoveryboot.sh runs this automatically when it finds a pristine stock
+# boot image. It is not needed when boot is already modified (Magisk,
+# KernelSU, or a custom kernel).
 #
 
 BOOT=/dev/block/by-name/boot
@@ -16,6 +20,7 @@ WORK=/tmp/multidisabler
 
 log() {
 	echo "multidisabler: $*"
+	echo "I:multidisabler: $*" >> /tmp/recovery.log
 }
 
 fail() {
