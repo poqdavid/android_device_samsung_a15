@@ -1,7 +1,25 @@
-# mount point	fstype		device			device2			flags
-/system_image		emmc	/dev/block/mapper/system		flags=backup=0;flashimg;display="System Image"
-/vendor_image		emmc	/dev/block/mapper/vendor		flags=backup=0;flashimg;display="Vendor Image"
-/product_image		emmc	/dev/block/mapper/product		flags=backup=0;flashimg;display="Product Image"
-/odm_image		emmc	/dev/block/mapper/odm		flags=backup=0;flashimg;display="Odm Image"
-/system_ext_image	emmc	/dev/block/mapper/system_ext	flags=backup=0;flashimg;display="System_EXT Image"
-/vendor_dlkm_image	emmc	/dev/block/mapper/vendor_dlkm	flags=backup=0;flashimg;display="Vendor_DLKM Image"
+# mount point     fstype    device                                  flags
+# Raw images
+/boot             emmc      /dev/block/by-name/boot                 flags=display="Boot";backup=1;flashimg=1
+/recovery         emmc      /dev/block/by-name/recovery             flags=display="Recovery";backup=1;flashimg=1
+/vendor_boot      emmc      /dev/block/by-name/vendor_boot          flags=display="Vendor Boot";backup=1;flashimg=1
+/dtbo             emmc      /dev/block/by-name/dtbo                 flags=display="DTBO";backup=1;flashimg=1
+/vbmeta           emmc      /dev/block/by-name/vbmeta               flags=display="VBMeta";backup=1;flashimg=1
+/vbmeta_system    emmc      /dev/block/by-name/vbmeta_system        flags=display="VBMeta System";backup=1;flashimg=1
+/vbmeta_vendor    emmc      /dev/block/by-name/vbmeta_vendor        flags=display="VBMeta Vendor";backup=1;flashimg=1
+
+# IMEI / calibration data (backup only)
+/efs              ext4      /dev/block/by-name/sec_efs              flags=display="EFS";backup=1
+/vendor_efs       ext4      /dev/block/by-name/efs                  flags=display="Vendor EFS";backup=1
+/nvram            emmc      /dev/block/by-name/nvram                flags=display="NVRAM";backup=1
+/nvdata           ext4      /dev/block/by-name/nvdata               flags=display="NVDATA";backup=1
+/nvcfg            ext4      /dev/block/by-name/nvcfg                flags=display="NVCFG";backup=1
+/protect_f        ext4      /dev/block/by-name/protect1             flags=display="Protect_f";backup=1
+/protect_s        ext4      /dev/block/by-name/protect2             flags=display="Protect_s";backup=1
+/proinfo          emmc      /dev/block/by-name/proinfo              flags=display="Proinfo";backup=1
+
+# Storage (OrangeFox: internal storage at /storage, backup enabled;
+# MicroSD at /sdcard1; USB OTG at /usb_otg as "USB-Storage")
+/storage          ext4      /data/media/0                           flags=display="Internal Storage";usermrf;backup=1;fsflags="bind";removable
+/sdcard1          auto      /devices/platform/soc/11240000.mmc*     flags=display="MicroSD";storage;wipeingui;removable
+/usb_otg          auto      /devices/platform/soc/mt_usb*           flags=display="USB-Storage";storage;wipeingui;removable
