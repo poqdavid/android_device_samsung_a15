@@ -42,8 +42,12 @@ This tree is for the 4G model only. The Galaxy A15 5G (SM-A156x, _"a15x"_) uses 
     * Reboot to recovery, using the relevant hardware key combination (hold Volume Up + Power with a USB cable connected)
     * Flash the OrangeFox zip installer from a MicroSD card, USB-OTG or with ADB sideload
 
+## Decryption
+	* /data (FBE v2 with metadata encryption) is decrypted with Samsung's own TEE services, with or without a PIN, password or pattern
+	* It only works on the stock firmware with the same security patch as the OrangeFox build (listed in `tee-files.txt`). With any other firmware OrangeFox starts without decryption, so that the keys are never touched by a mismatched TEE; use a build made for your firmware
+	* The TEE keeps the EFS partition in use until every user is decrypted. To restore an EFS backup after skipping the password prompt, first run `setprop vendor.recovery.tee_stop 1` in the terminal
+
 ## Issues
-	* FBE decryption is not supported. Use a MicroSD card, USB-OTG or ADB sideload for files; internal storage is only readable after a "Format Data", until Android encrypts it again
 	* Settings are stored in the cache partition, so wiping cache resets them
 	* The flashlight is not supported
 	* The CPU temperature is not shown
@@ -60,6 +64,15 @@ This tree is for the fox_12.1 manifest.
 ## Prebuilt kernel and modules
 
 The kernel, DTB, DTBO (`prebuilt/`) and the modules in `recovery/root/lib/modules` are taken unmodified from the stock recovery of firmware A155FXXS7CYG4 (kernel 5.10.226-android12-9-31117096). The touchscreen drivers (`zt7650m_ts.ko`, `focaltech_ts_ft3418.ko`), `tuihw-inf.ko` and the touch firmware come from `vendor_dlkm` and `vendor` of the same firmware. They must always be replaced together, from one firmware.
+
+## Prebuilt TEE files
+
+The TEE daemons, the keymint, fkeymaster and weaver (hermesd) services, the gatekeeper module and their libraries in `recovery/root/vendor` come unmodified from the same stock firmware; `tee-files.txt` lists them with their checksums, the firmware and its patch levels. The gatekeeper service itself is AOSP's, built with the recovery. The trusted apps are not part of the tree: at boot, `prepare_tee.sh` copies them from the installed firmware once it has checked its patch levels.
+
+For a new firmware, pull the files from a rooted phone running it and install them with the [builder](https://github.com/poqdavid/orangefox-a15-builder)'s tools; this also sets `PLATFORM_SECURITY_PATCH`:
+
+    tools/pull-tee-files.py tee-files
+    tools/install-tee-files.py tee-files.zip --tree device/samsung/a15
 
 ---
 ### Thanks to
