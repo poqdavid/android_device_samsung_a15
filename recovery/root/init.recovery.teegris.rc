@@ -6,9 +6,9 @@
 # unwrap them. The order follows /vendor/etc/init/teegris_v4.rc and the
 # keymint, fkeymaster, gatekeeper and hermesd scripts of the stock firmware.
 #
-# prepare_tee.sh first checks that the installed firmware has the patch
-# levels this recovery was built for (tee-files.txt in the tree) and copies
-# its trusted apps; the TEE is not started otherwise.
+# prepare_tee.sh first sets the version properties keymint reports to the
+# TEE to the installed firmware's values and copies its trusted apps; the
+# TEE is not started if it cannot read them.
 #
 # None of the services declares an "interface", so nothing restarts them
 # on demand once they are stopped.

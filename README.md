@@ -44,7 +44,7 @@ This tree is for the 4G model only. The Galaxy A15 5G (SM-A156x, _"a15x"_) uses 
 
 ## Decryption
 	* /data (FBE v2 with metadata encryption) is decrypted with Samsung's own TEE services, with or without a PIN, password or pattern
-	* It only works on the stock firmware with the same security patch as the OrangeFox build (listed in `tee-files.txt`). With any other firmware OrangeFox starts without decryption, so that the keys are never touched by a mismatched TEE; use a build made for your firmware
+	* The keys are bound to the Android version and patch levels. OrangeFox reports the installed firmware's values to the TEE, so it decrypts on any stock firmware date; if it cannot read them, it starts without decryption
 	* The TEE keeps the EFS partition in use until every user is decrypted. To restore an EFS backup after skipping the password prompt, first run `setprop vendor.recovery.tee_stop 1` in the terminal
 
 ## Issues
@@ -67,9 +67,9 @@ The kernel, DTB, DTBO (`prebuilt/`) and the modules in `recovery/root/lib/module
 
 ## Prebuilt TEE files
 
-The TEE daemons, the keymint, fkeymaster and weaver (hermesd) services, the gatekeeper module and their libraries in `recovery/root/vendor` come unmodified from the same stock firmware; `tee-files.txt` lists them with their checksums, the firmware and its patch levels. The gatekeeper service itself is AOSP's, built with the recovery. The trusted apps are not part of the tree: at boot, `prepare_tee.sh` copies them from the installed firmware once it has checked its patch levels.
+The TEE daemons, the keymint, fkeymaster and weaver (hermesd) services, the gatekeeper module and their libraries in `recovery/root/vendor` come unmodified from the same stock firmware; `tee-files.txt` lists them with their checksums, the firmware and its patch levels. The gatekeeper service itself is AOSP's, built with the recovery. The trusted apps are not part of the tree: at boot, `prepare_tee.sh` copies them from the installed firmware.
 
-For a new firmware, pull the files from a rooted phone running it and install them with the [builder](https://github.com/poqdavid/orangefox-a15-builder)'s tools; this also sets `PLATFORM_SECURITY_PATCH`:
+To refresh them from a newer firmware (needed only if Samsung changes the TEE services), pull the files from a rooted phone running it and install them with the [builder](https://github.com/poqdavid/orangefox-a15-builder)'s tools; this also sets `PLATFORM_SECURITY_PATCH`:
 
     tools/pull-tee-files.py tee-files
     tools/install-tee-files.py tee-files.zip --tree device/samsung/a15

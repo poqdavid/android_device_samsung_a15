@@ -19,16 +19,21 @@
 # 	Please maintain this if you use this script or any part of it
 #
 # prepare_tee.sh start: let init start Samsung's TEE for /data decryption,
-#                       only if the installed firmware is the one this
-#                       recovery was built for
+#                       reporting the installed firmware's versions to it
 # prepare_tee.sh stop:  stop the TEE services and release efs
 #
-# The /data keys are bound to the Android version and patch levels. If the
-# TEE saw newer patch levels than the ones the keys were made with, it would
-# upgrade them, and the installed (older) firmware could no longer use them.
-# So the TEE only runs when the installed system and vendor have exactly the
-# patch levels of this build (PLATFORM_SECURITY_PATCH); otherwise recovery
-# goes on without decryption.
+# The /data keys are bound to the Android version, the OS patch level and
+# the vendor patch level. The keymint trusted app takes these from the
+# keymint service, which reads them from ro.build.version.release,
+# ro.build.version.security_patch and ro.vendor.build.security_patch; the
+# values in the image header are only its fallback when those are missing
+# or malformed. The boot patch level comes from vbmeta, the same partition
+# Android boots with. So recovery sets the three properties to the installed
+# firmware's values before keymint starts, and the TEE sees exactly what it
+# sees under Android, whatever the firmware date. A TEE that saw newer
+# levels than the keys were made with would upgrade them, and the installed
+# firmware could no longer use them; if a value cannot be read, the TEE is
+# not started and recovery goes on without decryption.
 #
 
 TAG="tee"
@@ -47,16 +52,6 @@ log() {
 # prop_of <build.prop> <name>
 prop_of() {
 	grep -m 1 "^$2=" "$1" 2>/dev/null | cut -d= -f2-
-}
-
-# what this recovery was built with (the file, not getprop, so nothing that
-# changes properties at runtime can affect the check)
-built_prop() {
-	for f in /prop.default /system/etc/prop.default /vendor/build.prop; do
-		v=$(prop_of "$f" "$1")
-		[ -n "$v" ] && { echo "$v"; return; }
-	done
-	getprop "$1"
 }
 
 resetprop_bin() {
@@ -109,24 +104,24 @@ start_tee() {
 	rom_spl=$(prop_of "$SYSTEM_MNT/system/build.prop" ro.build.version.security_patch)
 	rom_vendor_spl=$(prop_of "$VENDOR_MNT/build.prop" ro.vendor.build.security_patch)
 	rom_build=$(prop_of "$SYSTEM_MNT/system/build.prop" ro.build.version.incremental)
-	our_spl=$(built_prop ro.build.version.security_patch)
-	our_vendor_spl=$(built_prop ro.vendor.build.security_patch)
 	log "installed: $rom_build, Android $rom_release, patch $rom_spl, vendor patch $rom_vendor_spl"
-	log "recovery built for: patch $our_spl, vendor patch $our_vendor_spl"
 
-	if [ -z "$rom_release" ] || [ -z "$rom_spl" ] || [ -z "$rom_vendor_spl" ]; then
-		finish skipped "cannot read the installed firmware's version; decryption off"
-	fi
-	if [ "$rom_spl" != "$our_spl" ] || [ "$rom_vendor_spl" != "$our_vendor_spl" ]; then
-		finish mismatch "the installed firmware has other patch levels than this recovery; decryption off"
-	fi
+	# malformed values would make the trusted app fall back to the header
+	echo "$rom_release" | grep -qE '^[0-9]+(\.[0-9]+){0,2}$' ||
+		finish skipped "cannot read the installed Android version; decryption off"
+	for v in "$rom_spl" "$rom_vendor_spl"; do
+		echo "$v" | grep -qE '^20[0-9]{2}-[01][0-9]-[0-3][0-9]$' ||
+			finish skipped "cannot read the installed patch levels; decryption off"
+	done
 
-	# keymint reads the Android version from this property; the build sets
-	# it to the recovery's own (12)
+	# what keymint reports to the TEE: the installed firmware's values, not
+	# the recovery's own (Android 12, the build's patch level)
 	rp=$(resetprop_bin)
 	[ -n "$rp" ] || finish failed "resetprop is missing; decryption off"
 	"$rp" ro.build.version.release "$rom_release"
 	"$rp" ro.build.version.release_or_codename "$rom_release"
+	"$rp" ro.build.version.security_patch "$rom_spl"
+	"$rp" ro.vendor.build.security_patch "$rom_vendor_spl"
 
 	# the trusted apps of the installed firmware, so they match its TEE
 	if [ ! -d "$VENDOR_MNT/tee" ]; then

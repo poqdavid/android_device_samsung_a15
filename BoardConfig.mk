@@ -71,7 +71,7 @@ BOARD_KERNEL_TAGS_OFFSET := 0x07c88000
 BOARD_DTB_OFFSET := 0x07c88000
 BOARD_MKBOOTIMG_ARGS := --kernel_offset $(BOARD_KERNEL_OFFSET) --ramdisk_offset $(BOARD_RAMDISK_OFFSET)
 BOARD_MKBOOTIMG_ARGS += --tags_offset $(BOARD_KERNEL_TAGS_OFFSET) --second_offset $(BOARD_KERNEL_SECOND_OFFSET)
-BOARD_MKBOOTIMG_ARGS += --header_version $(BOARD_BOOT_HEADER_VERSION) --pagesize $(BOARD_KERNEL_PAGESIZE) --board "SRPWI18B003"
+BOARD_MKBOOTIMG_ARGS += --header_version $(BOARD_BOOT_HEADER_VERSION) --pagesize $(BOARD_KERNEL_PAGESIZE) --board "SRPWI18B007"
 BOARD_MKBOOTIMG_ARGS += --dtb $(TARGET_PREBUILT_DTB) --dtb_offset $(BOARD_DTB_OFFSET)
 # Appends SEANDROIDENFORCE and the AVB hash footer to the recovery image
 BOARD_CUSTOM_BOOTIMG_MK := $(DEVICE_PATH)/mkboot/bootimg.mk
@@ -113,11 +113,10 @@ BOARD_AVB_RECOVERY_ROLLBACK_INDEX_LOCATION := 1
 BOARD_AVB_MAKE_VBMETA_IMAGE_ARGS += --flags 2
 
 # Crypto
-# The stock recovery's header says Android 12 with the firmware's patch
-# level, as does the boot image; the /data keys are bound to these. The
-# patch level is the one of the firmware in tee-files.txt (set by
-# install-tee-files.py) and must never be newer than the installed
-# firmware's: prepare_tee.sh only starts the TEE when they are equal.
+# As in the stock recovery: Android 12 and the patch level of the firmware
+# the TEE files come from (set by install-tee-files.py). The TEE does not
+# use these while keymint reports valid versions, which prepare_tee.sh
+# takes from the installed firmware.
 BOARD_USES_METADATA_PARTITION := true
 PLATFORM_VERSION := 12
 PLATFORM_SECURITY_PATCH := 2025-08-01

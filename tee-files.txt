@@ -1,7 +1,6 @@
 # Samsung TEE files for /data decryption, written by install-tee-files.py
-# from the stock firmware below. Recovery starts the TEE only when the
-# installed firmware has these patch levels; refresh the files and
-# PLATFORM_SECURITY_PATCH for every firmware update.
+# from the stock firmware below. At boot, recovery reports the installed
+# firmware's versions to the TEE, whatever these are.
 firmware=A155FXXS7CYG4
 android=15
 security_patch=2025-08-01
