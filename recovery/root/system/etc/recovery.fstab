@@ -1,57 +1,35 @@
-# Recovery fstab for the Samsung Galaxy A15 (SM-A155F, a15)
+# Android fstab file.
+# The filesystem that contains the filesystem checker binary (typically /system) cannot
+# specify MF_CHECK, and must come before any filesystems that do specify MF_CHECK
+
+#<src>						<mnt_point>	<type>	<mnt_flags and options>	<fs_mgr_flags>
+
+# Logical partitions - erofs
+system						/system		erofs	ro			wait,logical,first_stage_mount
+system_ext					/system_ext	erofs	ro			wait,logical,first_stage_mount
+vendor						/vendor		erofs	ro			wait,logical,first_stage_mount
+product						/product	erofs	ro			wait,logical,first_stage_mount
+odm						/odm		erofs	ro			wait,logical,first_stage_mount
+vendor_dlkm					/vendor_dlkm	erofs	ro			wait,logical,first_stage_mount
+
+# Logical partitions - ext4
+system						/system		ext4	ro			wait,logical,first_stage_mount
+system_ext					/system_ext	ext4	ro			wait,logical,first_stage_mount
+vendor						/vendor		ext4	ro			wait,logical,first_stage_mount
+product						/product	ext4	ro			wait,logical,first_stage_mount
+odm						/odm		ext4	ro			wait,logical,first_stage_mount
+vendor_dlkm					/vendor_dlkm	ext4	ro			wait,logical,first_stage_mount
+
+# Logical partitions - f2fs
+system						/system		f2fs	ro			wait,logical,first_stage_mount
+
+# Data and metadata
+/dev/block/by-name/metadata			/metadata	ext4	noatime,nosuid,nodev,noauto_da_alloc,discard,journal_checksum,data=ordered	wait,check,formattable,first_stage_mount
+/dev/block/by-name/userdata			/data		f2fs	noatime,nosuid,nodev,discard,usrquota,grpquota,fsync_mode=nobarrier,reserve_root=32768,resgid=5678,inlinecrypt	wait,check,quota,latemount,reservedsize=128M,checkpoint=fs,fileencryption=aes-256-xts:aes-256-cts:v2+inlinecrypt_optimized,keydirectory=/metadata/vold/metadata_encryption,fsverity,fscompress
+/dev/block/by-name/cache			/cache		ext4	noatime,nosuid,nodev,noauto_da_alloc,discard,journal_checksum,data=ordered	wait,check,formattable
+
+# Boot
+/dev/block/by-name/boot				/boot		emmc	defaults		defaults
+/dev/block/by-name/recovery			/recovery	emmc	defaults		defaults
+/dev/block/by-name/misc				/misc		emmc	defaults		defaults
 #
-# Based on the stock fstab.mt6789. Bootloader, TEE, modem and other firmware
-# images are left out on purpose: the recovery never needs to mount, back up
-# or flash them.
-#
-# OrangeFox rules: the logical partitions must not offer backup, restore or
-# image flashing on their own (the Super entry is created automatically), and
-# the display names/storage flags live in twrp.flags.
-#
-#<src>                              <mnt_point>      <type>  <mnt_flags and options>                                                                                                    <fs_mgr_flags>
-
-# Logical partitions (super)
-system                              /system          erofs   ro                                                                                                                         wait,logical,first_stage_mount
-system                              /system          ext4    ro                                                                                                                         wait,logical,first_stage_mount
-system                              /system          f2fs    ro                                                                                                                         wait,logical,first_stage_mount
-system_ext                          /system_ext      erofs   ro                                                                                                                         wait,logical,first_stage_mount
-system_ext                          /system_ext      ext4    ro                                                                                                                         wait,logical,first_stage_mount
-vendor                              /vendor          erofs   ro                                                                                                                         wait,logical,first_stage_mount
-vendor                              /vendor          ext4    ro                                                                                                                         wait,logical,first_stage_mount
-product                             /product         erofs   ro                                                                                                                         wait,logical,first_stage_mount
-product                             /product         ext4    ro                                                                                                                         wait,logical,first_stage_mount
-odm                                 /odm             erofs   ro                                                                                                                         wait,logical,first_stage_mount
-odm                                 /odm             ext4    ro                                                                                                                         wait,logical,first_stage_mount
-vendor_dlkm                         /vendor_dlkm     erofs   ro                                                                                                                         wait,logical,first_stage_mount
-vendor_dlkm                         /vendor_dlkm     ext4    ro                                                                                                                         wait,logical,first_stage_mount
-
-# Metadata, data and cache
-/dev/block/by-name/metadata         /metadata        ext4    noatime,nosuid,nodev,noauto_da_alloc,discard,journal_checksum,data=ordered                                                 wait,check,formattable,first_stage_mount
-/dev/block/by-name/userdata         /data            f2fs    noatime,nosuid,nodev,discard,usrquota,grpquota,fsync_mode=nobarrier,reserve_root=32768,resgid=5678,inlinecrypt  wait,check,quota,latemount,reservedsize=128M,checkpoint=fs,fileencryption=aes-256-xts:aes-256-cts:v2+inlinecrypt_optimized,keydirectory=/metadata/vold/metadata_encryption,fsverity,fscompress
-/dev/block/by-name/cache            /cache           ext4    noatime,nosuid,nodev,noauto_da_alloc,discard,journal_checksum,data=ordered                                                 wait,check,formattable
-
-# Raw images
-/dev/block/by-name/boot             /boot            emmc    defaults                                                                                                                   defaults
-/dev/block/by-name/recovery         /recovery        emmc    defaults                                                                                                                   defaults
-/dev/block/by-name/vendor_boot      /vendor_boot     emmc    defaults                                                                                                                   defaults
-/dev/block/by-name/dtbo             /dtbo            emmc    defaults                                                                                                                   defaults
-/dev/block/by-name/vbmeta           /vbmeta          emmc    defaults                                                                                                                   defaults
-/dev/block/by-name/vbmeta_system    /vbmeta_system   emmc    defaults                                                                                                                   defaults
-/dev/block/by-name/vbmeta_vendor    /vbmeta_vendor   emmc    defaults                                                                                                                   defaults
-/dev/block/by-name/misc             /misc            emmc    defaults                                                                                                                   defaults
-/dev/block/by-name/frp              /persistent      emmc    defaults                                                                                                                   defaults
-
-# IMEI / calibration data, backup only. As in Android: sec_efs is /efs,
-# efs is /mnt/vendor/efs (here /vendor_efs).
-/dev/block/by-name/sec_efs          /efs             ext4    noatime,nosuid,nodev,noauto_da_alloc,discard,journal_checksum,data=ordered                                                 wait,check
-/dev/block/by-name/efs              /vendor_efs      ext4    noatime,nosuid,nodev,noauto_da_alloc,discard,journal_checksum,data=ordered                                                 wait,check
-/dev/block/by-name/nvram            /nvram           emmc    defaults                                                                                                                   defaults
-/dev/block/by-name/nvdata           /nvdata          ext4    noatime,nosuid,nodev,noauto_da_alloc,discard,journal_checksum,data=ordered                                                 wait,check
-/dev/block/by-name/nvcfg            /nvcfg           ext4    noatime,nosuid,nodev,noauto_da_alloc,discard,journal_checksum,data=ordered                                                 wait,check
-/dev/block/by-name/protect1         /protect_f       ext4    noatime,nosuid,nodev,noauto_da_alloc,discard,journal_checksum,data=ordered                                                 wait,check
-/dev/block/by-name/protect2         /protect_s       ext4    noatime,nosuid,nodev,noauto_da_alloc,discard,journal_checksum,data=ordered                                                 wait,check
-/dev/block/by-name/proinfo          /proinfo         emmc    defaults                                                                                                                   defaults
-
-# Removable storage (same sysfs paths as the stock vold entries)
-/devices/platform/soc/11240000.mmc* /sdcard1         auto    defaults                                                                                                                   voldmanaged=sdcard:auto
-/devices/platform/soc/mt_usb*       /usb_otg         auto    defaults                                                                                                                   voldmanaged=usb:auto

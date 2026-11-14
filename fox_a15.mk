@@ -37,7 +37,7 @@ OF_SKIP_FBE_DECRYPTION := 1
 
 # others
 OF_UNBIND_SDCARD_F2FS := 1
-OF_QUICK_BACKUP_LIST := /boot;/efs;/vendor_efs;/nvram;/nvdata;/nvcfg;/protect_f;/protect_s;
+OF_QUICK_BACKUP_LIST := /boot;/efs;/sec_efs;/nvram;/nvdata;/nvcfg;/protect_f;/protect_s;
 OF_USE_DMCTL := 1
 OF_ENABLE_ALL_PARTITION_TOOLS := 1
 OF_NO_TREBLE_COMPATIBILITY_CHECK := 1
