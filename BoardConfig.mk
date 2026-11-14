@@ -113,6 +113,11 @@ BOARD_AVB_RECOVERY_ROLLBACK_INDEX_LOCATION := 1
 BOARD_AVB_MAKE_VBMETA_IMAGE_ARGS += --flags 2
 
 # Crypto
+# The stock recovery's header says Android 12 with the firmware's patch
+# level, as does the boot image; the /data keys are bound to these. The
+# patch level is the one of the firmware in tee-files.txt (set by
+# install-tee-files.py) and must never be newer than the installed
+# firmware's: prepare_tee.sh only starts the TEE when they are equal.
 BOARD_USES_METADATA_PARTITION := true
 PLATFORM_VERSION := 12
 PLATFORM_SECURITY_PATCH := 2025-08-01
@@ -120,10 +125,31 @@ PLATFORM_VERSION_LAST_STABLE := $(PLATFORM_VERSION)
 VENDOR_SECURITY_PATCH := $(PLATFORM_SECURITY_PATCH)
 BOOT_SECURITY_PATCH := $(PLATFORM_SECURITY_PATCH)
 
-# Disable crypto (the FBE keys are held by Samsung's TEEGRIS)
-TW_INCLUDE_CRYPTO := false
-TW_INCLUDE_CRYPTO_FBE := false
-TW_INCLUDE_FBE_METADATA_DECRYPT := false
+# FBE v2 with metadata encryption, decrypted with Samsung's TEEGRIS
+# services (init.recovery.teegris.rc). The keymaster version is not read
+# from the vendor partition: that would mount it over the recovery's /vendor.
+TW_INCLUDE_CRYPTO := true
+TW_INCLUDE_CRYPTO_FBE := true
+TW_INCLUDE_FBE_METADATA_DECRYPT := true
+TW_USE_FSCRYPT_POLICY := 2
+TW_FORCE_KEYMASTER_VER := true
+TW_PREPARE_DATA_MEDIA_EARLY := true
+
+# AOSP's HIDL gatekeeper service and passthrough implementation, for the
+# stock gatekeeper.mt6789.so module (the stock service is the same AOSP one)
+TARGET_RECOVERY_DEVICE_MODULES += \
+    android.hardware.gatekeeper@1.0-service \
+    android.hardware.gatekeeper@1.0-impl
+TW_RECOVERY_ADDITIONAL_RELINK_VENDOR_HW_BINARY_FILES += \
+    $(TARGET_OUT_VENDOR_EXECUTABLES)/hw/android.hardware.gatekeeper@1.0-service
+TW_RECOVERY_ADDITIONAL_RELINK_LIBRARY_FILES += \
+    $(TARGET_OUT_VENDOR_SHARED_LIBRARIES)/hw/android.hardware.gatekeeper@1.0-impl.so
+
+# Properties of the stock vendor the keystore services read
+TARGET_VENDOR_PROP += $(DEVICE_PATH)/vendor.prop
+
+# Keep the label of the TEE's storage on efs
+BOARD_VENDOR_SEPOLICY_DIRS += $(DEVICE_PATH)/sepolicy/vendor
 
 # PRODUCT_COPY_FILES directives.
 BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true

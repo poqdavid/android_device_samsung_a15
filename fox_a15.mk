@@ -32,9 +32,6 @@ OF_ALLOW_DISABLE_NAVBAR := 0
 # number of list options before scrollbar creation
 OF_OPTIONS_LIST_NUM := 8
 
-# skip decryption
-OF_SKIP_FBE_DECRYPTION := 1
-
 # others
 OF_UNBIND_SDCARD_F2FS := 1
 OF_QUICK_BACKUP_LIST := /boot;/efs;/sec_efs;/nvram;/nvdata;/nvcfg;/protect_f;/protect_s;

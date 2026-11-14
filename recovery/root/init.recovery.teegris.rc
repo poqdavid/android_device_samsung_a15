@@ -1,0 +1,128 @@
+#
+# Samsung TEEGRIS in recovery, for /data decryption
+#
+# The keys that protect /data never leave the TEE, so recovery starts the
+# same TEE daemons and keystore services Android uses and lets the TEE
+# unwrap them. The order follows /vendor/etc/init/teegris_v4.rc and the
+# keymint, fkeymaster, gatekeeper and hermesd scripts of the stock firmware.
+#
+# prepare_tee.sh first checks that the installed firmware has the patch
+# levels this recovery was built for (tee-files.txt in the tree) and copies
+# its trusted apps; the TEE is not started otherwise.
+#
+# None of the services declares an "interface", so nothing restarts them
+# on demand once they are stopped.
+#
+
+on post-fs
+    # efs keeps the TEE's secure storage (tee/srt) and the keymint
+    # attestation keys (DAK). Mounted where Android mounts it; nothing here
+    # relabels or creates files on it. errors=remount-ro instead of Android's
+    # errors=panic, so a damaged efs cannot stop recovery from booting.
+    mkdir /mnt/vendor 0755 root root
+    mkdir /mnt/vendor/efs 0771 system system
+    wait /dev/block/by-name/efs
+    mount ext4 /dev/block/by-name/efs /mnt/vendor/efs nosuid nodev noatime noauto_da_alloc,discard,journal_checksum,data=ordered,errors=remount-ro
+
+    mkdir /dev/socket/iwt 0770 system system
+    mkdir /dev/socket/iwt/ca 0770 system system
+
+    # the secure element behind weaver (snvm.ko)
+    chown system system /dev/k250a
+    chmod 0660 /dev/k250a
+
+on post-fs-data
+    mkdir /data/vendor 0771 system system
+    mkdir /data/vendor/tee 0700 system system
+    mkdir /data/vendor/keymaster 0775 system system
+    mkdir /data/vendor/gatekeeper 0770 system system
+    start tee_prepare
+
+on property:vendor.recovery.tee_state=ready
+    start tz_service
+
+on property:vendor.tzdaemon=Ready
+    setprop vendor.TEEGRIS.loaded true
+    write /proc/iccc_ready 1
+    start tzts_service
+
+on property:vendor.tzts_daemon=Ready
+    start vendor.keymint-default
+    start vendor.fkeymaster-default
+    start vendor.gatekeeper-1-0
+    start hermesd
+
+# Stop the TEE once every user is decrypted, so efs is no longer in use (it
+# can then be restored). To stop it by hand, e.g. after skipping the
+# password prompt: setprop vendor.recovery.tee_stop 1
+on property:twrp.all.users.decrypted=true
+    setprop vendor.recovery.tee_stop 1
+
+on property:vendor.recovery.tee_stop=1
+    start tee_stop
+
+service tee_prepare /system/bin/prepare_tee.sh start
+    user root
+    group root
+    disabled
+    oneshot
+    seclabel u:r:recovery:s0
+
+service tee_stop /system/bin/prepare_tee.sh stop
+    user root
+    group root
+    disabled
+    oneshot
+    seclabel u:r:recovery:s0
+
+service tz_service /vendor/bin/tzdaemon
+    class core
+    user system
+    group system readproc
+    setenv LD_LIBRARY_PATH /vendor/lib64:/system/lib64
+    disabled
+    seclabel u:r:recovery:s0
+
+service tzts_service /vendor/bin/tzts_daemon
+    class core
+    user system
+    group system
+    setenv LD_LIBRARY_PATH /vendor/lib64:/system/lib64
+    disabled
+    seclabel u:r:recovery:s0
+
+service vendor.keymint-default /vendor/bin/hw/android.hardware.security.keymint-service
+    class early_hal
+    user system
+    group system drmrpc
+    setenv LD_LIBRARY_PATH /vendor/lib64:/system/lib64
+    disabled
+    seclabel u:r:recovery:s0
+
+service vendor.fkeymaster-default /vendor/bin/vendor.samsung.hardware.security.fkeymaster-service
+    class early_hal
+    user system
+    group system
+    setenv LD_LIBRARY_PATH /vendor/lib64:/system/lib64
+    disabled
+    seclabel u:r:recovery:s0
+
+# AOSP's HIDL gatekeeper service (built with the recovery) on top of the
+# stock gatekeeper.mt6789.so module
+service vendor.gatekeeper-1-0 /vendor/bin/hw/android.hardware.gatekeeper@1.0-service
+    class hal
+    user system
+    group system 5678
+    setenv LD_LIBRARY_PATH /vendor/lib64:/system/lib64
+    disabled
+    seclabel u:r:recovery:s0
+
+# weaver (android.hardware.weaver@1.0) on the k250a secure element
+service hermesd /vendor/bin/hermesd /data/vendor/gatekeeper
+    class hal
+    user system
+    group system 5678
+    socket hermes_secnvm stream 660 system system
+    setenv LD_LIBRARY_PATH /vendor/lib64:/system/lib64
+    disabled
+    seclabel u:r:recovery:s0

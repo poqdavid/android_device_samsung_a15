@@ -1,0 +1,2 @@
+# Samsung's TEE keeps its secure storage on efs with this label
+type tee_efs_file, file_type;

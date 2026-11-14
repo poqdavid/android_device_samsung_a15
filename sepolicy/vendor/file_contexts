@@ -1,0 +1,1 @@
+/mnt/vendor/efs/tee(/.*)?    u:object_r:tee_efs_file:s0
