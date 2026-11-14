@@ -1,11 +1,14 @@
 #
 # Copyright (C) 2024 The Android Open Source Project
+# Copyright (C) 2024 The TWRP Open Source Project
 #
 # SPDX-License-Identifier: Apache-2.0
 #
 
+ifneq ($(filter a15, $(TARGET_DEVICE)),)
+
 LOCAL_PATH := $(call my-dir)
 
-ifeq ($(TARGET_DEVICE),a15)
-include $(call all-subdir-makefiles,$(LOCAL_PATH))
+include $(call all-makefiles-under,$(LOCAL_PATH))
+
 endif

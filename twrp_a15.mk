@@ -1,28 +1,35 @@
 #
 # Copyright (C) 2024 The Android Open Source Project
+# Copyright (C) 2024 The TWRP Open Source Project
 #
 # SPDX-License-Identifier: Apache-2.0
 #
+# Copyright (C) 2026 The OrangeFox Recovery Project
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
 
-# Inherit from those products. Most specific first.
-$(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit.mk)
-$(call inherit-product, $(SRC_TARGET_DIR)/product/base.mk)
+# Release name
+PRODUCT_RELEASE_NAME := a15
 
-# Inherit some common twrp stuff.
+# Default device path for tree
+DEVICE_PATH := device/samsung/$(PRODUCT_RELEASE_NAME)
+
+# Inherit device configuration
+$(call inherit-product, $(DEVICE_PATH)/device.mk)
+
+# Inherit fox flags
+$(call inherit-product-if-exists, $(DEVICE_PATH)/fox_a15.mk)
+
+# Inherit some common TWRP stuff.
 $(call inherit-product, vendor/twrp/config/common.mk)
 
-# Inherit from a15 device
-$(call inherit-product, device/samsung/a15/device.mk)
+PRODUCT_COPY_FILES += $(call find-copy-subdir-files,*,$(DEVICE_PATH)/recovery/root,recovery/root)
 
-# Enable project quotas and casefolding for emulated storage without sdcardfs
-$(call inherit-product, $(SRC_TARGET_DIR)/product/emulated_storage.mk)
-
-PRODUCT_COPY_FILES += $(call find-copy-subdir-files,*,device/samsung/a15/recovery/root,recovery/root)
-
-PRODUCT_DEVICE := a15
-PRODUCT_NAME := twrp_a15
-PRODUCT_BRAND := samsung
+## Device identifier. This must come after all inclusions
+PRODUCT_NAME := twrp_$(PRODUCT_RELEASE_NAME)
+PRODUCT_DEVICE := $(PRODUCT_RELEASE_NAME)
 PRODUCT_MODEL := SM-A155F
+PRODUCT_BRAND := samsung
 PRODUCT_MANUFACTURER := samsung
-
 PRODUCT_GMS_CLIENTID_BASE := android-samsung
+#

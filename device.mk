@@ -1,8 +1,19 @@
 #
 # Copyright (C) 2024 The Android Open Source Project
+# Copyright (C) 2024 The TWRP Open Source Project
 #
 # SPDX-License-Identifier: Apache-2.0
 #
+# Copyright (C) 2026 The OrangeFox Recovery Project
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+# Inherit from common AOSP config
+$(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit.mk)
+$(call inherit-product, $(SRC_TARGET_DIR)/product/base.mk)
+
+# Enable project quotas and casefolding for emulated storage without sdcardfs
+$(call inherit-product, $(SRC_TARGET_DIR)/product/emulated_storage.mk)
 
 # Dynamic partitions
 PRODUCT_USE_DYNAMIC_PARTITIONS := true
@@ -16,3 +27,4 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     android.hardware.health@2.1-impl \
     android.hardware.health@2.1-service
+#
