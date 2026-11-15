@@ -50,7 +50,6 @@ This tree is for the 4G model only. The Galaxy A15 5G (SM-A156x, _"a15x"_) uses 
 ## Issues
 	* Settings are stored in the cache partition, so wiping cache resets them
 	* The flashlight is not supported
-	* The CPU temperature is not shown yet (see [Prebuilt kernel and modules](#prebuilt-kernel-and-modules))
 
 ---
 ## Building
@@ -65,7 +64,7 @@ This tree is for the fox_12.1 manifest.
 
 The kernel, DTB, DTBO (`prebuilt/`) and the modules in `recovery/root/lib/modules` are taken unmodified from the stock recovery of firmware A155FXXS7CYG4 (kernel 5.10.226-android12-9-31117096). The touchscreen drivers (`zt7650m_ts.ko`, `focaltech_ts_ft3418.ko`), `tuihw-inf.ko` and the touch firmware come from `vendor_dlkm` and `vendor` of the same firmware. They must always be replaced together, from one firmware.
 
-The CPU temperature needs the SoC temperature sensor driver, `soc_temp_lvts.ko` from `vendor_dlkm`, which the stock recovery does not load. `cpu_temp.sh` loads it from `recovery/root/lib/modules` before OrangeFox starts; without it there, the temperature is hidden. The builder's `pull-vendor-files.sh` and `extract-prebuilts.py --vendor-files` add it with the touch drivers, from the same firmware.
+The CPU temperature needs the SoC temperature sensor driver, `soc_temp_lvts.ko`, also from `vendor_dlkm` of the same firmware, which the stock recovery does not load. `cpu_temp.sh` loads it from `recovery/root/lib/modules` before OrangeFox starts; without it there, the temperature is hidden. The builder's `pull-vendor-files.sh` and `extract-prebuilts.py --vendor-files` replace it together with the touch drivers.
 
 ## Prebuilt TEE files
 
