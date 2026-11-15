@@ -144,11 +144,13 @@ BOARD_VENDOR_SEPOLICY_DIRS += $(DEVICE_PATH)/sepolicy/vendor
 BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true
 DISABLE_ARTIFACT_PATH_REQUIREMENTS := true
 
-# Kernel module loading for touch
-# The stock recovery module set has no touchscreen driver. These are loaded
-# from the ramdisk's /lib/modules (their dependencies are in modules.dep),
-# with the installed ROM's vendor_dlkm as the fallback.
-TW_LOAD_VENDOR_MODULES := "zt7650m_ts.ko focaltech_ts_ft3418.ko"
+# Kernel modules from vendor_dlkm
+# The stock recovery module set has no touchscreen driver and no SoC
+# temperature sensor (soc_temp_lvts.ko). These are loaded from the
+# ramdisk's /lib/modules (their dependencies are in modules.dep); the touch
+# drivers fall back to the installed ROM's vendor_dlkm. soc_temp_lvts.ko is
+# loaded before OrangeFox starts, by cpu_temp.sh.
+TW_LOAD_VENDOR_MODULES := "zt7650m_ts.ko focaltech_ts_ft3418.ko soc_temp_lvts.ko"
 TW_LOAD_VENDOR_BOOT_MODULES := true
 
 # TWRP specific build flags
@@ -165,8 +167,9 @@ TW_MAX_BRIGHTNESS := 255
 TW_DEFAULT_BRIGHTNESS := 128
 TW_USE_LEGACY_BATTERY_SERVICES := true
 TW_CUSTOM_BATTERY_PATH := /sys/class/power_supply/battery
-# The thermal modules are not loaded in recovery
-TW_NO_CPU_TEMP := true
+# a link to the soc_max thermal zone, made by cpu_temp.sh; without
+# soc_temp_lvts.ko in the ramdisk it is not made and the temperature is hidden
+TW_CUSTOM_CPU_TEMP_PATH := /tmp/cpu_temp
 TW_NO_REBOOT_BOOTLOADER := true
 TW_HAS_DOWNLOAD_MODE := true
 TW_INCLUDE_NTFS_3G := true

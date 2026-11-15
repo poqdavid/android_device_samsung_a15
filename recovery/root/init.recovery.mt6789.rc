@@ -5,6 +5,11 @@ on init
     setprop sys.usb.controller "musb-hdrc"
     setprop sys.usb.ffs.aio_compat 0
 
+on post-fs
+    # Load the SoC temperature sensor and link /tmp/cpu_temp to it before
+    # OrangeFox starts (see cpu_temp.sh)
+    exec u:r:recovery:s0 root root -- /system/bin/cpu_temp.sh
+
 on fs && property:ro.debuggable=0
     # distinguish USB shoulde connect or not, i.e. CDP vs SDP
     write /sys/class/udc/musb-hdrc/device/cmode 2
