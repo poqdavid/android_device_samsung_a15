@@ -32,8 +32,9 @@ OF_ALLOW_DISABLE_NAVBAR := 0
 # number of list options before scrollbar creation
 OF_OPTIONS_LIST_NUM := 8
 
-# skip decryption
-OF_SKIP_FBE_DECRYPTION := 1
+# keymaster_ver for decryption; orangefox.mk requires it with
+# TW_FORCE_KEYMASTER_VER (same value as the a55x tree, also KeyMint)
+OF_DEFAULT_KEYMASTER_VERSION := 4.1
 
 # others
 OF_UNBIND_SDCARD_F2FS := 1

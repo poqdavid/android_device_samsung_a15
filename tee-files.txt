@@ -1,0 +1,46 @@
+# Samsung TEE files for /data decryption, written by install-tee-files.py
+# from the stock firmware below. At boot, recovery reports the installed
+# firmware's versions to the TEE, whatever these are.
+firmware=A155FXXS7CYG4
+android=15
+security_patch=2025-08-01
+vendor_security_patch=2025-08-01
+
+# sha256 tree-path phone-path
+8f520a243d0d094aa3db8f7d8578ad0058039c72a797b830b4bf9ebadb776bd8 recovery/root/vendor/bin/hermesd /vendor/bin/hermesd
+72d746ed823737d6f76789c15dad514a9d295f1292d22812dbb3cc781463afb9 recovery/root/vendor/bin/hw/android.hardware.gatekeeper@1.0-service /vendor/bin/hw/android.hardware.gatekeeper@1.0-service
+d6366c2ddecb93392a72801a2d627277c600c5b3ad9d8cc8c6e45f32079958ce recovery/root/vendor/bin/hw/android.hardware.security.keymint-service /vendor/bin/hw/android.hardware.security.keymint-service
+9583488925239c0df3c2f0e6efe9dcceacf146f6b47b8dbb8696735b53fc2fe5 recovery/root/vendor/bin/tzdaemon /vendor/bin/tzdaemon
+86124724d26a44f0c6bff7d25545c1df71dec50eb77cf700fb64684e573f2b52 recovery/root/vendor/bin/tzts_daemon /vendor/bin/tzts_daemon
+c7616024ceec36c06ff24371075c0583f4f6584222c354707b22456e123f37e2 recovery/root/vendor/bin/vendor.samsung.hardware.security.fkeymaster-service /vendor/bin/vendor.samsung.hardware.security.fkeymaster-service
+b6866f1bb2c1d8e33d094b2e286d9d00378d0a421d57f2c39c13ff760f8eb732 recovery/root/vendor/lib64/android.hardware.gatekeeper@1.0.so /vendor/lib64/android.hardware.gatekeeper@1.0.so
+a8141ce4a20685607e1c3456ae69c09fffaf1936bf7894102f13be6a2e760ed7 recovery/root/vendor/lib64/android.hardware.keymaster@3.0.so /vendor/lib64/android.hardware.keymaster@3.0.so
+2f5148555c6f0ae0fd44d8eae75f7f335b64f59be90a1697d78d56dc093e1d2e recovery/root/vendor/lib64/android.hardware.keymaster@4.0.so /vendor/lib64/android.hardware.keymaster@4.0.so
+e25bd9952bfcaf574aead94e3f9b3a8878b5a0fa852c1e603836c9e0550ca453 recovery/root/vendor/lib64/android.hardware.keymaster@4.1.so /vendor/lib64/android.hardware.keymaster@4.1.so
+075d2bb9c4b7fed9a0b94926360f7ec24d750b3f8774892273f25dc39a31cabf recovery/root/vendor/lib64/android.hardware.weaver@1.0.so /vendor/lib64/android.hardware.weaver@1.0.so
+fc27d329993fda753703b5201904a25e24871931028ff4dc533dcc3115e5a066 recovery/root/vendor/lib64/hw/gatekeeper.mt6789.so /vendor/lib64/hw/gatekeeper.mt6789.so
+fa5ffd35c755d0952353b4a3ec83238e6541e391d23dca4fb22a5cc7f2391f84 recovery/root/vendor/lib64/lib_android_keymaster_keymint_utils.so /vendor/lib64/lib_android_keymaster_keymint_utils.so
+928c837cd72db167785818f874f2b5f5927b6653bc4913f902e6805f12ae7542 recovery/root/vendor/lib64/libcppbor_external.so /vendor/lib64/libcppbor_external.so
+63d1937fca14de81ff7309acef98c3da29c04c82c0aeb6e97f01695ea9763845 recovery/root/vendor/lib64/libcppcose_rkp.so /vendor/lib64/libcppcose_rkp.so
+23db09dcbb4229634c881553421e107bbe911b69d2317e47c9e0e5d13988ed15 recovery/root/vendor/lib64/libese-grdg.so /vendor/lib64/libese-grdg.so
+29311e80bc4f124c691fcd88b3cf92cdd158964244204691aaa1389130ff5e19 recovery/root/vendor/lib64/libhermes_bdbridge.so /vendor/lib64/libhermes_bdbridge.so
+1521f476b52c8ab2a11c3aae03771efa80a6fe2473e60b3e832d4c3612a6345f recovery/root/vendor/lib64/libhwvault.so /vendor/lib64/libhwvault.so
+4e77b7d3a67d6e5e0a2f075d88238ce445cb2623ac745457d90ec6f8bdf088fb recovery/root/vendor/lib64/libjsoncpp.so /apex/com.android.vndk.v31/lib64/libjsoncpp.so
+3c7120014b3e6e6b1a6328561907500ed6a4eb348ae66225330dee03e38d5a22 recovery/root/vendor/lib64/libkeymaster4_1support.so /vendor/lib64/libkeymaster4_1support.so
+c02909ca3a9ece97f909ca94a7ee32e985960bdab0be80e9227892d7cd8490de recovery/root/vendor/lib64/libkeymaster4support.so /vendor/lib64/libkeymaster4support.so
+4cb5c6787c4a39a4450dafaa7c0c87044fad68f523ac630e9cd690b063e86f07 recovery/root/vendor/lib64/libkeymaster_messages.so /vendor/lib64/libkeymaster_messages.so
+c75a9943227d7bc3ad2e7708123c0a69ca1a310add03c30b5b389b991eaebb62 recovery/root/vendor/lib64/libkeymaster_portable.so /vendor/lib64/libkeymaster_portable.so
+2245073433cb8ca557c16789d779468cbbd5d70ff2492b3a9ddd00d0e8f82851 recovery/root/vendor/lib64/libkeymint.so /vendor/lib64/libkeymint.so
+57e44c676d657492a0e6da0a54180bfd359122b84cd2fd5d256f386ec2d598db recovery/root/vendor/lib64/libpuresoftkeymasterdevice.so /vendor/lib64/libpuresoftkeymasterdevice.so
+a1bd7dcf58cd314d59922895e612c7eb09be64da26a90933fb88f158fd1dcc3e recovery/root/vendor/lib64/libsecril-client.so /vendor/lib64/libsecril-client.so
+991fa9a0667ee9fb07d66b445aaff50f123239e86e80bf7023a385248d482799 recovery/root/vendor/lib64/libshctrl.so /vendor/lib64/libshctrl.so
+c0990183ec5ab6657efa0c541dcbaecfc13fcc6262d7c91605cda38ba14d8c6e recovery/root/vendor/lib64/libskeymint10device.so /vendor/lib64/libskeymint10device.so
+db1682f79091fa1703c8e9c8c16cfebad93c032a798eb52288110d913634b2cb recovery/root/vendor/lib64/libskeymint_cli.so /vendor/lib64/libskeymint_cli.so
+345d9597f7b30c634eca05a903845d4d0d4de8bc9159dfd0e17d9e5836f0ac6c recovery/root/vendor/lib64/libsoft_attestation_cert.so /vendor/lib64/libsoft_attestation_cert.so
+79efd945c8bc36d545ce5fa7b00f03df360f0e3e192b658eba8f6533e6cf75fc recovery/root/vendor/lib64/libteecl.so /vendor/lib64/libteecl.so
+2323f5ff500e679d2a1fd8add594b6be554bcfa2860d90d1cf432873aaa3ad3b recovery/root/vendor/lib64/libuuid.so /vendor/lib64/libuuid.so
+71365354394718089702e9098b034a255890d754caf1e68439fe6db95c87d4ea recovery/root/vendor/lib64/vendor.samsung.hardware.keymint-V1-ndk_platform.so /vendor/lib64/vendor.samsung.hardware.keymint-V1-ndk_platform.so
+cdfc22ae27b7455a8850f067fab7b9164a319ab3cf6efa9dc64e62352672836a recovery/root/vendor/lib64/vendor.samsung.hardware.security.drk-V1-ndk_platform.so /vendor/lib64/vendor.samsung.hardware.security.drk-V1-ndk_platform.so
+16765163b2cbcc914ad25ab14615c4de5424729da6b69b4208bc569c49a439b4 recovery/root/vendor/lib64/vendor.samsung.hardware.security.drk@2.0.so /vendor/lib64/vendor.samsung.hardware.security.drk@2.0.so
+747d9151e731d14c1903850eb33710942e0ab5efec2d360be3b61709dc821f5f recovery/root/vendor/lib64/vendor.samsung.hardware.security.fkeymaster-V1-ndk_platform.so /vendor/lib64/vendor.samsung.hardware.security.fkeymaster-V1-ndk_platform.so
+152ce16764dff743dd33d6e1b601296d07db34782564ada0fd150cb0dda800e2 recovery/root/vendor/lib64/vendor.samsung.hardware.security.hermes-V1-ndk_platform.so /vendor/lib64/vendor.samsung.hardware.security.hermes-V1-ndk_platform.so

@@ -71,7 +71,7 @@ BOARD_KERNEL_TAGS_OFFSET := 0x07c88000
 BOARD_DTB_OFFSET := 0x07c88000
 BOARD_MKBOOTIMG_ARGS := --kernel_offset $(BOARD_KERNEL_OFFSET) --ramdisk_offset $(BOARD_RAMDISK_OFFSET)
 BOARD_MKBOOTIMG_ARGS += --tags_offset $(BOARD_KERNEL_TAGS_OFFSET) --second_offset $(BOARD_KERNEL_SECOND_OFFSET)
-BOARD_MKBOOTIMG_ARGS += --header_version $(BOARD_BOOT_HEADER_VERSION) --pagesize $(BOARD_KERNEL_PAGESIZE) --board "SRPWI18B003"
+BOARD_MKBOOTIMG_ARGS += --header_version $(BOARD_BOOT_HEADER_VERSION) --pagesize $(BOARD_KERNEL_PAGESIZE) --board "SRPWI18B007"
 BOARD_MKBOOTIMG_ARGS += --dtb $(TARGET_PREBUILT_DTB) --dtb_offset $(BOARD_DTB_OFFSET)
 # Appends SEANDROIDENFORCE and the AVB hash footer to the recovery image
 BOARD_CUSTOM_BOOTIMG_MK := $(DEVICE_PATH)/mkboot/bootimg.mk
@@ -113,27 +113,44 @@ BOARD_AVB_RECOVERY_ROLLBACK_INDEX_LOCATION := 1
 BOARD_AVB_MAKE_VBMETA_IMAGE_ARGS += --flags 2
 
 # Crypto
+# As in the stock recovery: Android 12 and the patch level of the firmware
+# the TEE files come from (set by install-tee-files.py). The TEE does not
+# use these while keymint reports valid versions, which prepare_tee.sh
+# takes from the installed firmware.
 BOARD_USES_METADATA_PARTITION := true
 PLATFORM_VERSION := 12
-PLATFORM_SECURITY_PATCH := 2099-12-31
+PLATFORM_SECURITY_PATCH := 2025-08-01
 PLATFORM_VERSION_LAST_STABLE := $(PLATFORM_VERSION)
 VENDOR_SECURITY_PATCH := $(PLATFORM_SECURITY_PATCH)
 BOOT_SECURITY_PATCH := $(PLATFORM_SECURITY_PATCH)
 
-# Disable crypto (the FBE keys are held by Samsung's TEEGRIS)
-TW_INCLUDE_CRYPTO := false
-TW_INCLUDE_CRYPTO_FBE := false
-TW_INCLUDE_FBE_METADATA_DECRYPT := false
+# FBE v2 with metadata encryption, decrypted with Samsung's TEEGRIS
+# services (init.recovery.teegris.rc). The keymaster version is not read
+# from the vendor partition: that would mount it over the recovery's /vendor.
+TW_INCLUDE_CRYPTO := true
+TW_INCLUDE_CRYPTO_FBE := true
+TW_INCLUDE_FBE_METADATA_DECRYPT := true
+TW_USE_FSCRYPT_POLICY := 2
+TW_FORCE_KEYMASTER_VER := true
+TW_PREPARE_DATA_MEDIA_EARLY := true
+
+# Properties of the stock vendor the keystore services read
+TARGET_VENDOR_PROP += $(DEVICE_PATH)/vendor.prop
+
+# Keep the label of the TEE's storage on efs
+BOARD_VENDOR_SEPOLICY_DIRS += $(DEVICE_PATH)/sepolicy/vendor
 
 # PRODUCT_COPY_FILES directives.
 BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true
 DISABLE_ARTIFACT_PATH_REQUIREMENTS := true
 
-# Kernel module loading for touch
-# The stock recovery module set has no touchscreen driver. These are loaded
-# from the ramdisk's /lib/modules (their dependencies are in modules.dep),
-# with the installed ROM's vendor_dlkm as the fallback.
-TW_LOAD_VENDOR_MODULES := "zt7650m_ts.ko focaltech_ts_ft3418.ko"
+# Kernel modules from vendor_dlkm
+# The stock recovery module set has no touchscreen driver and no SoC
+# temperature sensor (soc_temp_lvts.ko). These are loaded from the
+# ramdisk's /lib/modules (their dependencies are in modules.dep); the touch
+# drivers fall back to the installed ROM's vendor_dlkm. soc_temp_lvts.ko is
+# loaded before OrangeFox starts, by cpu_temp.sh.
+TW_LOAD_VENDOR_MODULES := "zt7650m_ts.ko focaltech_ts_ft3418.ko soc_temp_lvts.ko"
 TW_LOAD_VENDOR_BOOT_MODULES := true
 
 # TWRP specific build flags
@@ -150,8 +167,9 @@ TW_MAX_BRIGHTNESS := 255
 TW_DEFAULT_BRIGHTNESS := 128
 TW_USE_LEGACY_BATTERY_SERVICES := true
 TW_CUSTOM_BATTERY_PATH := /sys/class/power_supply/battery
-# The thermal modules are not loaded in recovery
-TW_NO_CPU_TEMP := true
+# a link to the soc_max thermal zone, made by cpu_temp.sh; without
+# soc_temp_lvts.ko in the ramdisk it is not made and the temperature is hidden
+TW_CUSTOM_CPU_TEMP_PATH := /tmp/cpu_temp
 TW_NO_REBOOT_BOOTLOADER := true
 TW_HAS_DOWNLOAD_MODE := true
 TW_INCLUDE_NTFS_3G := true

@@ -42,11 +42,15 @@ This tree is for the 4G model only. The Galaxy A15 5G (SM-A156x, _"a15x"_) uses 
     * Reboot to recovery, using the relevant hardware key combination (hold Volume Up + Power with a USB cable connected)
     * Flash the OrangeFox zip installer from a MicroSD card, USB-OTG or with ADB sideload
 
+## Decryption
+	* /data (FBE v2 with metadata encryption) is decrypted with Samsung's own TEE services, with or without a PIN, password or pattern
+	* The keys are bound to the Android version and patch levels. OrangeFox reports the installed firmware's values to the TEE, so it decrypts on any stock firmware date
+	* The TEE keeps the EFS partition in use until every user is decrypted. To restore an EFS backup after skipping the password prompt, first run `setprop vendor.recovery.tee_stop 1` in the terminal
+
 ## Issues
-	* FBE decryption is not supported. Use a MicroSD card, USB-OTG or ADB sideload for files; internal storage is only readable after a "Format Data", until Android encrypts it again
 	* Settings are stored in the cache partition, so wiping cache resets them
+	* Decryption needs a readable installed system and vendor. If the TEE cannot start (for example after wiping them), or OrangeFox does not get past decrypting /data within 40 seconds, it restarts itself with decryption off for that boot: /data shows as not mountable, and the logs are saved to `/cache/Fox/tee`
 	* The flashlight is not supported
-	* The CPU temperature is not shown
 
 ---
 ## Building
@@ -60,6 +64,17 @@ This tree is for the fox_12.1 manifest.
 ## Prebuilt kernel and modules
 
 The kernel, DTB, DTBO (`prebuilt/`) and the modules in `recovery/root/lib/modules` are taken unmodified from the stock recovery of firmware A155FXXS7CYG4 (kernel 5.10.226-android12-9-31117096). The touchscreen drivers (`zt7650m_ts.ko`, `focaltech_ts_ft3418.ko`), `tuihw-inf.ko` and the touch firmware come from `vendor_dlkm` and `vendor` of the same firmware. They must always be replaced together, from one firmware.
+
+The CPU temperature needs the SoC temperature sensor driver, `soc_temp_lvts.ko`, also from `vendor_dlkm` of the same firmware, which the stock recovery does not load. `cpu_temp.sh` loads it from `recovery/root/lib/modules` before OrangeFox starts; without it there, the temperature is hidden. The builder's `pull-vendor-files.sh` and `extract-prebuilts.py --vendor-files` replace it together with the touch drivers.
+
+## Prebuilt TEE files
+
+At boot, `prepare_tee.sh` takes the TEE from the installed firmware: the trusted apps, and the TEE daemons, the keymint, fkeymaster, gatekeeper and weaver (hermesd) services, the gatekeeper modules and their libraries listed in `recovery/root/vendor/etc/tee-files.list`. So they always match the firmware, SM-A155F or SM-A155M, of any date.
+
+The copies in `recovery/root/vendor` are the fallback for anything the installed firmware lacks. They come unmodified from one stock firmware; `tee-files.txt` lists them with their checksums, that firmware and its patch levels. To refresh them and the list, pull the files from a rooted phone and install them with the [builder](https://github.com/poqdavid/orangefox-a15-builder)'s tools; this also sets `PLATFORM_SECURITY_PATCH`:
+
+    tools/pull-tee-files.py tee-files
+    tools/install-tee-files.py tee-files.zip --tree device/samsung/a15
 
 ---
 ### Thanks to
