@@ -87,6 +87,8 @@ For their fixes to that tree
 The OrangeFox trees for the Galaxy [A33 5G](https://gitlab.com/OrangeFox/device/a33x) and [A23 5G](https://gitlab.com/OrangeFox/device/a23xq)
 For the layout and scripts this tree follows
 
+@[G3R03XP](https://github.com/G3R03XP) and @[kkdemergencia](https://github.com/kkdemergencia) for testing the builds and this would not have been possible without them
+
 ### Kernel sources
 The recovery uses the stock kernel. Samsung publishes its source for the SM-A155F at [opensource.samsung.com](https://opensource.samsung.com); a buildable copy is available at [https://github.com/poqdavid/android_kernel_samsung_sma155f](https://github.com/poqdavid/android_kernel_samsung_sma155f)
 
