@@ -25,6 +25,15 @@ $(call inherit-product, vendor/twrp/config/common.mk)
 
 PRODUCT_COPY_FILES += $(call find-copy-subdir-files,*,$(DEVICE_PATH)/recovery/root,recovery/root)
 
+# The firmware set's recovery modules and touch firmware, and what it is for,
+# so runatboot.sh can tell when the bootloader is of another One UI generation
+include $(DEVICE_PATH)/firmware/firmware.mk
+PRODUCT_COPY_FILES += $(call find-copy-subdir-files,*,$(A15_FIRMWARE_DIR)/recovery/root,recovery/root)
+PRODUCT_VENDOR_PROPERTIES += \
+    ro.vendor.a15.firmware=$(A15_FIRMWARE) \
+    ro.vendor.a15.firmware.build=$(A15_FIRMWARE_BUILD) \
+    ro.vendor.a15.firmware.os=$(A15_FIRMWARE_OS)
+
 ## Device identifier. This must come after all inclusions
 PRODUCT_NAME := twrp_$(PRODUCT_RELEASE_NAME)
 PRODUCT_DEVICE := $(PRODUCT_RELEASE_NAME)
