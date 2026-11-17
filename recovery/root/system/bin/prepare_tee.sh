@@ -22,6 +22,8 @@
 #                       with the installed firmware's TEE files, reporting
 #                       its versions
 # prepare_tee.sh stop:  stop the TEE services and release efs
+# prepare_tee.sh fallback [reason]: turn decryption off and restart
+#                       OrangeFox now (for testing)
 #
 # The /data keys are bound to the Android version, the OS patch level and
 # the vendor patch level. The keymint trusted app takes these from the
@@ -38,7 +40,13 @@
 #
 # Without the TEE, keystore2 keeps aborting for want of keymint, and
 # OrangeFox, which waits for keystore2 before it decrypts /data, stays on
-# its splash screen. So every failure here is fatal to the recovery UI.
+# its splash screen. So if the TEE cannot be started, or OrangeFox does not
+# get past decrypting /data in time, decryption is turned off for this
+# boot: OrangeFox takes its /data flags from the installed vendor's fstab,
+# and ro.boot.fstab_suffix points it at a copy of the recovery fstab
+# without the encryption flags instead. The logs are saved to
+# /cache/Fox/tee and OrangeFox is restarted if it is still stuck. /data
+# then shows as not mountable; the next boot tries again.
 #
 # OrangeFox mounts the installed vendor over /vendor for a moment while it
 # starts, to read its build.prop and fstab, at about the time the TEE files
@@ -54,6 +62,9 @@ VENDOR_DEV=/dev/block/mapper/vendor
 SYSTEM_MNT=/mnt/tee_system
 VENDOR_MNT=/mnt/tee_vendor
 LIST=/vendor/etc/tee-files.list
+NOCRYPT_SUFFIX=fox_nocrypt
+NOCRYPT_FSTAB=/system/etc/fstab.$NOCRYPT_SUFFIX
+SAVED_LOGS=Fox/tee
 SERVICES="hermesd vendor.gatekeeper-1-0 vendor.fkeymaster-default vendor.keymint-default tzts_service tz_service"
 
 log() {
@@ -77,12 +88,101 @@ cleanup() {
 	umount "$VENDOR_MNT" 2>/dev/null
 }
 
-# finish <state> <message>: ready starts the TEE (see init.recovery.teegris.rc)
+# finish <state> <message>: ready starts the TEE (see init.recovery.teegris.rc);
+# anything else turns decryption off
 finish() {
 	cleanup
 	log "$2"
 	setprop vendor.recovery.tee_state "$1"
+	if [ "$1" = ready ]; then
+		watch_startup 40
+	else
+		fallback "" 10
+	fi
 	exit 0
+}
+
+# fox_started: OrangeFox loads its UI only once it is past decrypting /data
+fox_started() {
+	grep -q 'Loading package: OrangeFox' /tmp/recovery.log 2>/dev/null
+}
+
+# watch_startup <seconds>: turn decryption off if OrangeFox is not past
+# decrypting /data in time
+watch_startup() {
+	t=0
+	while [ "$t" -lt $(($1 * 5)) ]; do
+		fox_started && return 0
+		sleep 0.2
+		t=$((t + 1))
+	done
+	fallback "OrangeFox did not get past decrypting /data within $1 s" 0
+}
+
+# save_logs: this boot's TEE, OrangeFox, kernel and logcat logs to
+# /cache/Fox/tee, where OrangeFox keeps its settings
+save_logs() {
+	mnt=""
+	if grep -q '^[^ ]* /cache ' /proc/mounts; then
+		dir=/cache/$SAVED_LOGS
+	else
+		mnt=/mnt/tee_cache
+		mkdir -p "$mnt"
+		if ! mount -t ext4 /dev/block/by-name/cache "$mnt" 2>/dev/null; then
+			log "cannot mount cache; logs not saved"
+			return
+		fi
+		dir=$mnt/$SAVED_LOGS
+	fi
+	log "saving the logs to /cache/$SAVED_LOGS"
+	mkdir -p "$dir"
+	cp /tmp/tee.log "$dir/tee.log" 2>/dev/null
+	cp /tmp/recovery.log "$dir/recovery.log" 2>/dev/null
+	dmesg > "$dir/dmesg.txt" 2>/dev/null
+	logcat -d > "$dir/logcat.txt" 2>/dev/null
+	sync
+	[ -n "$mnt" ] && umount "$mnt"
+}
+
+# hide_decryption [reason]: OrangeFox reads its /data and /metadata flags
+# from the first fstab.<suffix> it finds, trying fstab_suffix before
+# hardware (mt6789, the installed vendor's fstab); with the suffix set, it
+# finds the copy without encryption flags first. Fails if it is off already.
+hide_decryption() {
+	[ "$(getprop vendor.recovery.decrypt)" = off ] && return 1
+	log "turning decryption off${1:+: $1}"
+	rp=$(resetprop_bin)
+	if [ -z "$rp" ]; then
+		log "resetprop is missing; cannot turn decryption off"
+		return 1
+	fi
+	sed -E 's/,(fileencryption|keydirectory|metadata_encryption)=[^,[:space:]]*//g' \
+		/system/etc/recovery.fstab > "$NOCRYPT_FSTAB" || return 1
+	"$rp" ro.boot.fstab_suffix "$NOCRYPT_SUFFIX"
+	setprop vendor.recovery.decrypt off
+	# keystore2 only aborts without keymint; free efs for restores
+	setprop ctl.stop keystore2
+	stop_tee
+	return 0
+}
+
+# fallback [reason] <seconds>: decryption off; then restart OrangeFox
+# unless it gets past decrypting /data within <seconds> (an unencrypted
+# /data, after a format, does not need the TEE)
+fallback() {
+	hide_decryption "$1" || return
+	t=0
+	while [ "$t" -lt $(($2 * 5)) ]; do
+		if fox_started; then
+			save_logs
+			return
+		fi
+		sleep 0.2
+		t=$((t + 1))
+	done
+	save_logs
+	log "restarting OrangeFox without decryption"
+	setprop ctl.restart recovery
 }
 
 # mount_ro <device> <dir>: a few tries, the device-mapper node can show up
@@ -240,6 +340,7 @@ stop_tee() {
 case "$1" in
 	start) start_tee ;;
 	stop) stop_tee ;;
-	*) echo "usage: $0 start|stop" >&2; exit 1 ;;
+	fallback) fallback "${2:-requested}" 0 ;;
+	*) echo "usage: $0 start|stop|fallback [reason]" >&2; exit 1 ;;
 esac
 exit 0

@@ -49,7 +49,7 @@ This tree is for the 4G model only. The Galaxy A15 5G (SM-A156x, _"a15x"_) uses 
 
 ## Issues
 	* Settings are stored in the cache partition, so wiping cache resets them
-	* Decryption needs a readable installed system and vendor. Without them (for example after wiping them) the TEE cannot start and OrangeFox stays on its splash screen; use a build of the `fox_12.1` branch, which does not decrypt
+	* Decryption needs a readable installed system and vendor. If the TEE cannot start (for example after wiping them), or OrangeFox does not get past decrypting /data within 40 seconds, it restarts itself with decryption off for that boot: /data shows as not mountable, and the logs are saved to `/cache/Fox/tee`
 	* The flashlight is not supported
 
 ---
