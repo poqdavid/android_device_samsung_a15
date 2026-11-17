@@ -44,11 +44,12 @@ This tree is for the 4G model only. The Galaxy A15 5G (SM-A156x, _"a15x"_) uses 
 
 ## Decryption
 	* /data (FBE v2 with metadata encryption) is decrypted with Samsung's own TEE services, with or without a PIN, password or pattern
-	* The keys are bound to the Android version and patch levels. OrangeFox reports the installed firmware's values to the TEE, so it decrypts on any stock firmware date; if it cannot read them, it starts without decryption
+	* The keys are bound to the Android version and patch levels. OrangeFox reports the installed firmware's values to the TEE, so it decrypts on any stock firmware date
 	* The TEE keeps the EFS partition in use until every user is decrypted. To restore an EFS backup after skipping the password prompt, first run `setprop vendor.recovery.tee_stop 1` in the terminal
 
 ## Issues
 	* Settings are stored in the cache partition, so wiping cache resets them
+	* Decryption needs a readable installed system and vendor. Without them (for example after wiping them) the TEE cannot start and OrangeFox stays on its splash screen; use a build of the `fox_12.1` branch, which does not decrypt
 	* The flashlight is not supported
 
 ---

@@ -34,7 +34,17 @@
 # sees under Android, whatever the firmware date. A TEE that saw newer
 # levels than the keys were made with would upgrade them, and the installed
 # firmware could no longer use them; if a value cannot be read, the TEE is
-# not started and recovery goes on without decryption.
+# not started.
+#
+# Without the TEE, keystore2 keeps aborting for want of keymint, and
+# OrangeFox, which waits for keystore2 before it decrypts /data, stays on
+# its splash screen. So every failure here is fatal to the recovery UI.
+#
+# OrangeFox mounts the installed vendor over /vendor for a moment while it
+# starts, to read its build.prop and fstab, at about the time the TEE files
+# are copied. Anything written to /vendor meanwhile lands on that read-only
+# mount and fails, so the files are only copied while /vendor is the
+# ramdisk's, and copied again if OrangeFox mounted over it in the meantime.
 #
 
 TAG="tee"
@@ -87,19 +97,20 @@ mount_ro() {
 	return 1
 }
 
+# vendor_mounted: OrangeFox has the installed vendor mounted over /vendor
+vendor_mounted() {
+	grep -q '^[^ ]* /vendor ' /proc/mounts
+}
+
 # copy_tee_files: the installed firmware's own TEE services and libraries
-# (tee-files.list) over the copies in the ramdisk, so they match its TEE;
-# the ramdisk copies stay for anything the firmware lacks
+# ($TEE_FILES) over the copies in the ramdisk, so they match its TEE; the
+# ramdisk copies stay for anything the firmware lacks. Fails if /vendor was
+# mounted over while copying.
 copy_tee_files() {
-	[ -f "$LIST" ] || { log "no $LIST; using the TEE files in the ramdisk"; return; }
 	copied=0
 	kept=0
 	missing=""
-	while read -r f; do
-		case "$f" in
-			/vendor/*) ;;
-			*) continue ;;
-		esac
+	for f in $TEE_FILES; do
 		src="$VENDOR_MNT${f#/vendor}"
 		if [ -f "$src" ]; then
 			mkdir -p "${f%/*}"
@@ -111,19 +122,36 @@ copy_tee_files() {
 				copied=$((copied + 1))
 				continue
 			fi
-			rm -f "$f.new"
+			rm -f "$f.new" 2>/dev/null
+			vendor_mounted && return 1
 		fi
 		if [ -f "$f" ]; then
 			kept=$((kept + 1))
 		else
 			missing="$missing ${f##*/}"
 		fi
-	done < "$LIST"
-	log "TEE files: $copied from the installed firmware, $kept from the ramdisk${missing:+, missing:$missing}"
+	done
+	return 0
+}
+
+# install_tee_files: the trusted apps and the TEE files, on the ramdisk's
+# /vendor; fails if it is mounted over before or while copying
+install_tee_files() {
+	vendor_mounted && return 1
+	[ -n "$TEE_FILES" ] || TEE_FILES=$(grep '^/vendor/' "$LIST" 2>/dev/null)
+	rm -rf /vendor/tee 2>/dev/null
+	[ -e /vendor/tee ] && return 1
+	cp -a "$VENDOR_MNT/tee" /vendor/ 2>/dev/null || return 1
+	copy_tee_files || return 1
+	! vendor_mounted
 }
 
 start_tee() {
 	[ -n "$(getprop vendor.recovery.tee_state)" ] && exit 0
+
+	# the list is only in the ramdisk; read before OrangeFox maps super and
+	# can mount the installed vendor over /vendor (and again later if not)
+	TEE_FILES=$(grep '^/vendor/' "$LIST" 2>/dev/null)
 
 	# the logical partitions appear once OrangeFox has mapped super; the
 	# TEE has to be up soon after, while OrangeFox waits for keymint
@@ -160,17 +188,26 @@ start_tee() {
 	"$rp" ro.build.version.security_patch "$rom_spl"
 	"$rp" ro.vendor.build.security_patch "$rom_vendor_spl"
 
-	# the trusted apps of the installed firmware, so they match its TEE
+	# the trusted apps of the installed firmware, so they match its TEE, and
+	# its TEE services and libraries
 	if [ ! -d "$VENDOR_MNT/tee" ]; then
 		finish failed "the installed vendor has no /vendor/tee; decryption off"
 	fi
-	rm -rf /vendor/tee
-	if ! cp -a "$VENDOR_MNT/tee" /vendor/tee; then
-		rm -rf /vendor/tee
-		finish failed "copying the trusted apps failed; decryption off"
+	tries=1
+	until install_tee_files; do
+		if [ "$tries" -ge 150 ]; then
+			vendor_mounted || rm -rf /vendor/tee
+			finish failed "copying the TEE files failed; decryption off"
+		fi
+		sleep 0.2
+		tries=$((tries + 1))
+	done
+	[ "$tries" -gt 1 ] && log "copied on try $tries: OrangeFox had the installed vendor mounted on /vendor"
+	if [ -n "$TEE_FILES" ]; then
+		log "TEE files: $copied from the installed firmware, $kept from the ramdisk${missing:+, missing:$missing}"
+	else
+		log "no $LIST; using the TEE files in the ramdisk"
 	fi
-
-	copy_tee_files
 
 	finish ready "starting the TEE"
 }
