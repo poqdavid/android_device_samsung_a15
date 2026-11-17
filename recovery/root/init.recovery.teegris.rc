@@ -15,13 +15,19 @@
 # on demand once they are stopped.
 #
 
-on init
-    # vold adds every fscrypt key it installs to a keyring named "fscrypt" in
-    # the session keyring as well, and gives up on the key ("Unable to find
-    # device keyring") if that keyring does not exist. Android's init creates
-    # it when it mounts an encrypted /data, which recovery never does. Created
-    # here, before OrangeFox starts, so that OrangeFox inherits it. It stays
-    # empty if /data is not encrypted.
+# vold adds every fscrypt key it installs to a keyring named "fscrypt" in
+# the session keyring as well, and gives up on the key ("Unable to find
+# device keyring") if that keyring does not exist. Android's init creates
+# it when it mounts an encrypted /data, which recovery never does.
+#
+# TWRP's install_keyring also sets ro.crypto.state and ro.crypto.type, and
+# with ro.crypto.type=file init's mkdir of /data/vendor at post-fs-data has
+# to give the directory an encryption policy, which it cannot do on the
+# ramdisk ("Unable to read system policy"), so init reboots into recovery,
+# over and over. So it waits for OrangeFox to set both itself, right before
+# it installs the DE key: OrangeFox then sleeps 1 s for services to start.
+# OrangeFox shares init's session keyring, so it sees a keyring added later.
+on property:ro.crypto.state=encrypted && property:ro.crypto.type=file
     install_keyring
 
 on post-fs
