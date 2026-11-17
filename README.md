@@ -28,11 +28,12 @@ This tree is for the 4G model only. The Galaxy A15 5G (SM-A156x, _"a15x"_) uses 
 
 ---
 # Which build
-Each OrangeFox build is for one One UI generation (its file names end in the set's name, such as `oneui7`), and only works fully, touch included, on a phone whose bootloader is of that generation. The 4th character from the end of the bootloader version tells which. `adb shell getprop ro.boot.bootloader` shows it; on stock firmware it is also the end of the build number (Settings > About phone > Software information).
+Each OrangeFox build is for one One UI generation (its file names end in `oneui7` or `oneui6`), and only works fully, touch included, on a phone whose bootloader is of that generation. The 4th character from the end of the bootloader version tells which. `adb shell getprop ro.boot.bootloader` shows it; on stock firmware it is also the end of the build number (Settings > About phone > Software information).
 
 | Build | Bootloader | Example |
 | :---- | :--------- | :------ |
 | `oneui7` | One UI 7 (Android 15), letter `C` | A155FXXU7**C**YK1 |
+| `oneui6` | One UI 6 (Android 14), letter `B` | A155MUBS6**B**YE1 |
 
 # Flashing
 ## Flashing with an installed custom recovery (OrangeFox/TWRP):
@@ -66,7 +67,7 @@ Each OrangeFox build is for one One UI generation (its file names end in the set
 This tree is for the fox_12.1 manifest. `A15_FIRMWARE` picks the firmware set to build (see below); without it, the build is `oneui7`.
 
     . build/envsetup.sh
-    export A15_FIRMWARE=oneui7
+    export A15_FIRMWARE=oneui6
     lunch twrp_a15-eng
     mka adbd recoveryimage
 
@@ -79,6 +80,7 @@ The bootloader builds the kernel's device tree from the installed firmware's `lk
 | Set | Firmware | Kernel | Bootloaders |
 | :-- | :------- | :----- | :---------- |
 | `oneui7` | A155FXXS7CYG4 | 5.10.226-android12-9-31117096 | `C` |
+| `oneui6` | A155MUBS6BYE1 | 5.10.205-android12-9-28575149 | `B` |
 
 Each set has the kernel, DTB and DTBO (`prebuilt/`) and the modules in `recovery/root/lib/modules`, taken unmodified from the stock recovery of its firmware, and `firmware.mk` with the firmware version, the board name of that stock image and the OS letters of the bootloaders it is for. The touchscreen drivers (`zt7650m_ts.ko`, `focaltech_ts_ft3418.ko`), `tuihw-inf.ko` and the touch firmware (`recovery/root/vendor/firmware`) come from `vendor_dlkm` and `vendor` of the same firmware. A set must always be replaced as a whole, from one firmware. Everything else in the tree is shared by all sets.
 
@@ -88,7 +90,7 @@ To refresh a set, or to add one, use the [builder](https://github.com/poqdavid/o
 
     tools/pull-vendor-files.sh vendor-files --recovery
     tools/extract-prebuilts.py --recovery vendor-files/recovery.img --vendor-files vendor-files \
-        --tree device/samsung/a15 --firmware oneui7
+        --tree device/samsung/a15 --firmware oneui6
 
 ## Prebuilt TEE files
 

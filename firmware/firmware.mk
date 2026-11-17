@@ -11,7 +11,7 @@
 # generation touch does not work. Each set is therefore a build of its own;
 # pick it before lunch with
 #
-#     export A15_FIRMWARE=oneui7
+#     export A15_FIRMWARE=oneui6
 #
 # Included by BoardConfig.mk and twrp_a15.mk.
 
