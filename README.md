@@ -51,6 +51,7 @@ This tree is for the 4G model only. The Galaxy A15 5G (SM-A156x, _"a15x"_) uses 
 	* Settings are stored in the cache partition, so wiping cache resets them
 	* Decryption needs a readable installed system and vendor. If the TEE cannot start (for example after wiping them), or OrangeFox does not get past decrypting /data within 40 seconds, it restarts itself with decryption off for that boot: /data shows as not mountable, and the logs are saved to `/cache/Fox/tee`
 	* The flashlight is not supported
+	* On Zinitix touch panels, the recovery does not update the touch firmware, unlike Android, which flashes it at every boot (see `zinitix_touch.sh`)
 
 ---
 ## Building
@@ -63,7 +64,7 @@ This tree is for the fox_12.1 manifest.
 
 ## Prebuilt kernel and modules
 
-The kernel, DTB, DTBO (`prebuilt/`) and the modules in `recovery/root/lib/modules` are taken unmodified from the stock recovery of firmware A155FXXS7CYG4 (kernel 5.10.226-android12-9-31117096). The touchscreen drivers (`zt7650m_ts.ko`, `focaltech_ts_ft3418.ko`), `tuihw-inf.ko` and the touch firmware come from `vendor_dlkm` and `vendor` of the same firmware. They must always be replaced together, from one firmware.
+The kernel, DTB, DTBO (`prebuilt/`) and the modules in `recovery/root/lib/modules` are taken unmodified from the stock recovery of firmware A155FXXS7CYG4 (kernel 5.10.226-android12-9-31117096). The touchscreen drivers (`zt7650m_ts.ko`, `focaltech_ts_ft3418.ko`), `tuihw-inf.ko` and the FocalTech touch firmware come from `vendor_dlkm` and `vendor` of the same firmware. The Zinitix touch firmware is left out on purpose (see `zinitix_touch.sh`). They must always be replaced together, from one firmware.
 
 The CPU temperature needs the SoC temperature sensor driver, `soc_temp_lvts.ko`, also from `vendor_dlkm` of the same firmware, which the stock recovery does not load. `cpu_temp.sh` loads it from `recovery/root/lib/modules` before OrangeFox starts; without it there, the temperature is hidden. The builder's `pull-vendor-files.sh` and `extract-prebuilts.py --vendor-files` replace it together with the touch drivers.
 

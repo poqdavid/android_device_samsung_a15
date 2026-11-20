@@ -149,7 +149,8 @@ DISABLE_ARTIFACT_PATH_REQUIREMENTS := true
 # temperature sensor (soc_temp_lvts.ko). These are loaded from the
 # ramdisk's /lib/modules (their dependencies are in modules.dep); the touch
 # drivers fall back to the installed ROM's vendor_dlkm. soc_temp_lvts.ko is
-# loaded before OrangeFox starts, by cpu_temp.sh.
+# loaded before OrangeFox starts, by cpu_temp.sh, and zt7650m_ts.ko by
+# zinitix_touch.sh, so that it finds no firmware to flash.
 TW_LOAD_VENDOR_MODULES := "zt7650m_ts.ko focaltech_ts_ft3418.ko soc_temp_lvts.ko"
 TW_LOAD_VENDOR_BOOT_MODULES := true
 
