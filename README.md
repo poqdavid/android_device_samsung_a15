@@ -27,14 +27,6 @@ This tree is for the 4G model only. The Galaxy A15 5G (SM-A156x, _"a15x"_) uses 
 <img src="https://fdn2.gsmarena.com/vv/bigpic/samsung-galaxy-a15-lte-.jpg" width="45%"/>
 
 ---
-# Which build
-Each OrangeFox build is for one One UI generation (its file names end in `oneui7` or `oneui6`), and only works fully, touch included, on a phone whose bootloader is of that generation. The 4th character from the end of the bootloader version tells which. `adb shell getprop ro.boot.bootloader` shows it; on stock firmware it is also the end of the build number (Settings > About phone > Software information).
-
-| Build | Bootloader | Example |
-| :---- | :--------- | :------ |
-| `oneui7` | One UI 7 (Android 15), letter `C` | A155FXXU7**C**YK1 |
-| `oneui6` | One UI 6 (Android 14), letter `B` | A155MUBS6**B**YE1 |
-
 # Flashing
 ## Flashing with an installed custom recovery (OrangeFox/TWRP):
     * Download the OrangeFox zip installer file
@@ -59,42 +51,25 @@ Each OrangeFox build is for one One UI generation (its file names end in `oneui7
 	* Settings are stored in the cache partition, so wiping cache resets them
 	* Decryption needs a readable installed system and vendor. If the TEE cannot start (for example after wiping them), or OrangeFox does not get past decrypting /data within 40 seconds, it restarts itself with decryption off for that boot: /data shows as not mountable, and the logs are saved to `/cache/Fox/tee`
 	* The flashlight is not supported
-	* On a bootloader of another One UI generation than the build's, touch does not work; `/tmp/recovery.log` then says which build this is and which bootloader the phone has
 
 ---
 ## Building
 
-This tree is for the fox_12.1 manifest. `A15_FIRMWARE` picks the firmware set to build (see below); without it, the build is `oneui7`.
+This tree is for the fox_12.1 manifest.
 
     . build/envsetup.sh
-    export A15_FIRMWARE=oneui6
     lunch twrp_a15-eng
     mka adbd recoveryimage
 
-To build another set in the same `out` directory, run `mka installclean` first.
+## Prebuilt kernel and modules
 
-## Firmware sets
+The kernel, DTB, DTBO (`prebuilt/`) and the modules in `recovery/root/lib/modules` are taken unmodified from the stock recovery of firmware A155FXXS7CYG4 (kernel 5.10.226-android12-9-31117096). The touchscreen drivers (`zt7650m_ts.ko`, `focaltech_ts_ft3418.ko`), `tuihw-inf.ko` and the touch firmware come from `vendor_dlkm` and `vendor` of the same firmware. They must always be replaced together, from one firmware.
 
-The bootloader builds the kernel's device tree from the installed firmware's `lk` and `dtbo` partitions, not from the recovery image, so the recovery's kernel and modules have to come from a firmware of the same One UI generation as the installed bootloader. The tree keeps one set per generation in `firmware/<set>`:
-
-| Set | Firmware | Kernel | Bootloaders |
-| :-- | :------- | :----- | :---------- |
-| `oneui7` | A155FXXS7CYG4 | 5.10.226-android12-9-31117096 | `C` |
-| `oneui6` | A155MUBS6BYE1 | 5.10.205-android12-9-28575149 | `B` |
-
-Each set has the kernel, DTB and DTBO (`prebuilt/`) and the modules in `recovery/root/lib/modules`, taken unmodified from the stock recovery of its firmware, and `firmware.mk` with the firmware version, the board name of that stock image and the OS letters of the bootloaders it is for. The touchscreen drivers (`zt7650m_ts.ko`, `focaltech_ts_ft3418.ko`), `tuihw-inf.ko` and the touch firmware (`recovery/root/vendor/firmware`) come from `vendor_dlkm` and `vendor` of the same firmware. A set must always be replaced as a whole, from one firmware. Everything else in the tree is shared by all sets.
-
-The CPU temperature needs the SoC temperature sensor driver, `soc_temp_lvts.ko`, also from `vendor_dlkm` of the same firmware, which the stock recovery does not load. `cpu_temp.sh` loads it from the set's `lib/modules` before OrangeFox starts; without it there, the temperature is hidden.
-
-To refresh a set, or to add one, use the [builder](https://github.com/poqdavid/orangefox-a15-builder)'s tools on a rooted phone running that stock firmware:
-
-    tools/pull-vendor-files.sh vendor-files --recovery
-    tools/extract-prebuilts.py --recovery vendor-files/recovery.img --vendor-files vendor-files \
-        --tree device/samsung/a15 --firmware oneui6
+The CPU temperature needs the SoC temperature sensor driver, `soc_temp_lvts.ko`, also from `vendor_dlkm` of the same firmware, which the stock recovery does not load. `cpu_temp.sh` loads it from `recovery/root/lib/modules` before OrangeFox starts; without it there, the temperature is hidden. The builder's `pull-vendor-files.sh` and `extract-prebuilts.py --vendor-files` replace it together with the touch drivers.
 
 ## Prebuilt TEE files
 
-At boot, `prepare_tee.sh` takes the TEE from the installed firmware: the trusted apps, and the TEE daemons, the keymint, fkeymaster, gatekeeper and weaver (hermesd) services, the gatekeeper modules and their libraries listed in `recovery/root/vendor/etc/tee-files.list`. So they always match the firmware, SM-A155F or SM-A155M, of any date and One UI generation, and are shared by all firmware sets.
+At boot, `prepare_tee.sh` takes the TEE from the installed firmware: the trusted apps, and the TEE daemons, the keymint, fkeymaster, gatekeeper and weaver (hermesd) services, the gatekeeper modules and their libraries listed in `recovery/root/vendor/etc/tee-files.list`. So they always match the firmware, SM-A155F or SM-A155M, of any date.
 
 The copies in `recovery/root/vendor` are the fallback for anything the installed firmware lacks. They come unmodified from one stock firmware; `tee-files.txt` lists them with their checksums, that firmware and its patch levels. To refresh them and the list, pull the files from a rooted phone and install them with the [builder](https://github.com/poqdavid/orangefox-a15-builder)'s tools; this also sets `PLATFORM_SECURITY_PATCH`:
 

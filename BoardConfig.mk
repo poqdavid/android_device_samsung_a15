@@ -49,11 +49,9 @@ TARGET_BOARD_PLATFORM := mt6789
 TARGET_SCREEN_DENSITY := 450
 
 # Kernel
-# The kernel, DTB, DTBO and recovery modules come from the firmware set
-# picked with A15_FIRMWARE (see firmware/firmware.mk and README.md), which
-# also names the board of its stock recovery image.
-include $(DEVICE_PATH)/firmware/firmware.mk
-KERNEL_DIR := $(A15_FIRMWARE_DIR)/prebuilt
+# The kernel, DTB, DTBO and every module under recovery/root/lib/modules
+# come from one stock firmware (see README.md) and are replaced together.
+KERNEL_DIR := $(DEVICE_PATH)/prebuilt
 TARGET_PREBUILT_KERNEL := $(KERNEL_DIR)/Image.gz
 TARGET_PREBUILT_DTB := $(KERNEL_DIR)/dtb
 BOARD_PREBUILT_DTBOIMAGE := $(KERNEL_DIR)/recovery_dtbo
@@ -73,7 +71,7 @@ BOARD_KERNEL_TAGS_OFFSET := 0x07c88000
 BOARD_DTB_OFFSET := 0x07c88000
 BOARD_MKBOOTIMG_ARGS := --kernel_offset $(BOARD_KERNEL_OFFSET) --ramdisk_offset $(BOARD_RAMDISK_OFFSET)
 BOARD_MKBOOTIMG_ARGS += --tags_offset $(BOARD_KERNEL_TAGS_OFFSET) --second_offset $(BOARD_KERNEL_SECOND_OFFSET)
-BOARD_MKBOOTIMG_ARGS += --header_version $(BOARD_BOOT_HEADER_VERSION) --pagesize $(BOARD_KERNEL_PAGESIZE) --board "$(A15_BOARD_NAME)"
+BOARD_MKBOOTIMG_ARGS += --header_version $(BOARD_BOOT_HEADER_VERSION) --pagesize $(BOARD_KERNEL_PAGESIZE) --board "SRPWI18B007"
 BOARD_MKBOOTIMG_ARGS += --dtb $(TARGET_PREBUILT_DTB) --dtb_offset $(BOARD_DTB_OFFSET)
 # Appends SEANDROIDENFORCE and the AVB hash footer to the recovery image
 BOARD_CUSTOM_BOOTIMG_MK := $(DEVICE_PATH)/mkboot/bootimg.mk
@@ -148,7 +146,7 @@ DISABLE_ARTIFACT_PATH_REQUIREMENTS := true
 
 # Kernel modules from vendor_dlkm
 # The stock recovery module set has no touchscreen driver and no SoC
-# temperature sensor (soc_temp_lvts.ko). The firmware set adds them to the
+# temperature sensor (soc_temp_lvts.ko). These are loaded from the
 # ramdisk's /lib/modules (their dependencies are in modules.dep); the touch
 # drivers fall back to the installed ROM's vendor_dlkm. soc_temp_lvts.ko is
 # loaded before OrangeFox starts, by cpu_temp.sh.
