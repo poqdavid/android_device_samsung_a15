@@ -51,6 +51,7 @@ This tree is for the 4G model only. The Galaxy A15 5G (SM-A156x, _"a15x"_) uses 
 	* Settings are stored in the cache partition, so wiping cache resets them
 	* Decryption needs a readable installed system and vendor. If the TEE cannot start (for example after wiping them), or OrangeFox does not get past decrypting /data within 40 seconds, it restarts itself with decryption off for that boot: /data shows as not mountable, and the logs are saved to `/cache/Fox/tee`
 	* The flashlight is not supported
+	* On Zinitix touch panels, the screen goes black for about a second before OrangeFox appears: touch only works after the display has been turned off and on once (see `zinitix_touch.sh` and `display_cycle`)
 	* On Zinitix touch panels, the recovery does not update the touch firmware, unlike Android, which flashes it at every boot (see `zinitix_touch.sh`)
 
 ---

@@ -154,6 +154,10 @@ DISABLE_ARTIFACT_PATH_REQUIREMENTS := true
 TW_LOAD_VENDOR_MODULES := "zt7650m_ts.ko focaltech_ts_ft3418.ko soc_temp_lvts.ko"
 TW_LOAD_VENDOR_BOOT_MODULES := true
 
+# zinitix_touch.sh turns the display off and on with it before OrangeFox
+# starts; Zinitix touch only works after that
+TARGET_RECOVERY_DEVICE_MODULES += display_cycle
+
 # TWRP specific build flags
 TW_INCLUDE_REPACKTOOLS := true
 TW_INCLUDE_LIBRESETPROP := true

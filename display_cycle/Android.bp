@@ -1,0 +1,15 @@
+// Copyright (C) 2026 The OrangeFox Recovery Project
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+// Only the recovery ramdisk needs it: zinitix_touch.sh runs it before
+// OrangeFox starts. BoardConfig.mk adds it to TARGET_RECOVERY_DEVICE_MODULES.
+cc_binary {
+    name: "display_cycle",
+    srcs: ["display_cycle.c"],
+    cflags: [
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+    ],
+    recovery: true,
+}
