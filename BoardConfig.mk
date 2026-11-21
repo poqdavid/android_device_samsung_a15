@@ -186,7 +186,6 @@ TARGET_USES_LOGD := true
 TW_BACKUP_EXCLUSIONS := /data/fonts
 
 # tap to wake
-TW_NO_SCREEN_BLANK := true
 
 # use unique serial number for device ID
 TW_USE_SERIALNO_PROPERTY_FOR_DEVICE_ID := true
