@@ -19,7 +19,9 @@
  *
  * Turns the display off through DRM, waits off_ms (1000 by default) and
  * turns it on again with a black frame. For the panel this is the same as
- * OrangeFox blanking and unblanking the screen with the power key.
+ * OrangeFox blanking and unblanking the screen with the power key. When the
+ * kernel reports the display off, as it does at boot, it turns it on first
+ * (see main).
  *
  * The Zinitix touch controller only reports touches after the panel has
  * been powered down and brought up again by the kernel. At boot the panel is
@@ -49,6 +51,11 @@
 
 #define TAG "display_cycle"
 #define DEFAULT_OFF_MS 1000
+/*
+ * Lets the take-over settle before the display goes off. When this was
+ * tested by hand, OrangeFox had held the display for minutes in between.
+ */
+#define TAKEOVER_SETTLE_MS 500
 
 struct output {
 	uint32_t connector_id;
@@ -285,25 +292,15 @@ static int open_card(struct output *out)
 	return -1;
 }
 
-static const char *crtc_state(int fd, uint32_t crtc_id)
+static int crtc_active(int fd, uint32_t crtc_id)
 {
 	struct drm_mode_crtc crtc;
 
 	memset(&crtc, 0, sizeof(crtc));
 	crtc.crtc_id = crtc_id;
 	if (drm_ioctl(fd, DRM_IOCTL_MODE_GETCRTC, &crtc))
-		return "in an unknown state";
-	return crtc.mode_valid ? "on" : "off";
-}
-
-static int display_off(int fd, const struct output *out)
-{
-	struct drm_mode_crtc crtc;
-
-	/* no framebuffer, no connectors and no mode disables the CRTC */
-	memset(&crtc, 0, sizeof(crtc));
-	crtc.crtc_id = out->crtc_id;
-	return drm_ioctl(fd, DRM_IOCTL_MODE_SETCRTC, &crtc);
+		return -1;
+	return crtc.mode_valid ? 1 : 0;
 }
 
 /*
@@ -311,13 +308,11 @@ static int display_off(int fd, const struct output *out)
  * kernel removes it when we exit, and OrangeFox puts its own up when it
  * starts.
  */
-static int display_on(int fd, const struct output *out)
+static int black_fb(int fd, const struct output *out, uint32_t *fb_id)
 {
 	struct drm_mode_create_dumb create;
 	struct drm_mode_map_dumb map;
 	struct drm_mode_fb_cmd fb;
-	struct drm_mode_crtc crtc;
-	uint32_t connector = out->connector_id;
 	void *pixels;
 
 	memset(&create, 0, sizeof(create));
@@ -348,14 +343,32 @@ static int display_on(int fd, const struct output *out)
 	fb.handle = create.handle;
 	if (drm_ioctl(fd, DRM_IOCTL_MODE_ADDFB, &fb))
 		return -1;
+	*fb_id = fb.fb_id;
+	return 0;
+}
+
+static int display_on(int fd, const struct output *out, uint32_t fb_id)
+{
+	struct drm_mode_crtc crtc;
+	uint32_t connector = out->connector_id;
 
 	memset(&crtc, 0, sizeof(crtc));
 	crtc.crtc_id = out->crtc_id;
-	crtc.fb_id = fb.fb_id;
+	crtc.fb_id = fb_id;
 	crtc.set_connectors_ptr = (uintptr_t)&connector;
 	crtc.count_connectors = 1;
 	crtc.mode = out->mode;
 	crtc.mode_valid = 1;
+	return drm_ioctl(fd, DRM_IOCTL_MODE_SETCRTC, &crtc);
+}
+
+static int display_off(int fd, const struct output *out)
+{
+	struct drm_mode_crtc crtc;
+
+	/* no framebuffer, no connectors and no mode disables the CRTC */
+	memset(&crtc, 0, sizeof(crtc));
+	crtc.crtc_id = out->crtc_id;
 	return drm_ioctl(fd, DRM_IOCTL_MODE_SETCRTC, &crtc);
 }
 
@@ -371,7 +384,8 @@ int main(int argc, char **argv)
 {
 	struct output out;
 	long off_ms = DEFAULT_OFF_MS;
-	int fd;
+	uint32_t fb_id;
+	int fd, active;
 
 	if (argc > 1) {
 		char *end;
@@ -389,8 +403,31 @@ int main(int argc, char **argv)
 		log_msg("no connected display found: %s", strerror(errno));
 		return 1;
 	}
+	if (black_fb(fd, &out, &fb_id)) {
+		log_msg("making a black frame failed: %s", strerror(errno));
+		close(fd);
+		return 1;
+	}
 
-	log_msg("display was %s", crtc_state(fd, out.crtc_id));
+	/*
+	 * At boot the MediaTek driver keeps the bootloader's display running
+	 * but reports the CRTC off. Turning it off then changes nothing, and
+	 * the first "on" only takes the display over: the panel never powers
+	 * down, and Zinitix touch stayed dead. So take it over first, and the
+	 * off below powers the panel down.
+	 */
+	active = crtc_active(fd, out.crtc_id);
+	if (active != 1) {
+		log_msg("display reported %s, taking it over first",
+			active == 0 ? "off" : "in an unknown state");
+		if (display_on(fd, &out, fb_id)) {
+			log_msg("taking the display over failed: %s", strerror(errno));
+			close(fd);
+			return 1;
+		}
+		sleep_ms(TAKEOVER_SETTLE_MS);
+	}
+
 	if (display_off(fd, &out)) {
 		/* EACCES here means someone else, usually OrangeFox, is DRM master */
 		log_msg("turning the display off failed: %s", strerror(errno));
@@ -400,7 +437,7 @@ int main(int argc, char **argv)
 	log_msg("display off for %ld ms", off_ms);
 	sleep_ms(off_ms);
 
-	if (display_on(fd, &out)) {
+	if (display_on(fd, &out, fb_id)) {
 		/* OrangeFox turns it on when it starts, so this is not fatal */
 		log_msg("turning the display on failed: %s", strerror(errno));
 		close(fd);

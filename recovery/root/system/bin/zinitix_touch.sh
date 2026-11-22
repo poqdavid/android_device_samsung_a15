@@ -49,8 +49,8 @@ MODULE=zt7650m_ts.ko
 DRIVER=/sys/bus/i2c/drivers/zt_ts_device
 TAG=zinitix_touch
 
-# Userspace lines do not reliably make it into the kernel log here, so they
-# also go to the log OrangeFox appends to when it starts
+# The kernel log rotates within seconds of boot here, so the lines also go
+# to the log OrangeFox appends to when it starts
 LOG=/tmp/recovery.log
 
 log() {
