@@ -31,6 +31,14 @@ on fs
     write /config/usb_gadget/g1/os_desc/b_vendor_code 0x1
     write /config/usb_gadget/g1/os_desc/qw_sign "MSFT100"
     symlink /config/usb_gadget/g1/configs/b.1 /config/usb_gadget/g1/os_desc/b.1
+    # Samsung's battery driver holds a PC's USB port to 100 mA, less than the
+    # phone draws with the screen on, until it hears that the PC configured
+    # the gadget. In Android that comes from ss_mon, Samsung's USB monitor
+    # function, when the PC sends SET_CONFIGURATION. Under any instance name
+    # but mtp or ptp it has no interfaces, so the PC does not see it. It
+    # stays in every config as f3, which the triggers below never remove.
+    mkdir /config/usb_gadget/g1/functions/ss_mon.usb0
+    symlink /config/usb_gadget/g1/functions/ss_mon.usb0 /config/usb_gadget/g1/configs/b.1/f3
     mount functionfs adb /dev/usb-ffs/adb uid=2000,gid=2000
     mount functionfs mtp /dev/usb-ffs/mtp rmode=0770,fmode=0660,uid=1024,gid=1024,no_disconnect=1
     write /sys/class/android_usb/android0/f_ffs/aliases adb
