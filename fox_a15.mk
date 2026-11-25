@@ -47,8 +47,10 @@ OF_NO_ADDITIONAL_MIUI_PROPS_CHECK := 1
 # prebuilt stock kernel
 OF_FORCE_PREBUILT_KERNEL := 1
 
-# disable the flashlight (the flash LED modules are not in the recovery ramdisk)
-OF_FLASHLIGHT_ENABLE := 0
+# flashlight: OrangeFox wants a LED class style directory, and the torch is
+# a single rear_flash file; init.recovery.mt6789.rc makes the directory
+OF_FLASHLIGHT_ENABLE := 1
+OF_FL_PATH1 := /tmp/flashlight
 
 # no persist partition
 OF_DEVICE_WITHOUT_PERSIST := 1

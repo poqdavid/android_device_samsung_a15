@@ -14,6 +14,16 @@ on post-fs
     # display off and on while OrangeFox does not hold it yet (see
     # zinitix_touch.sh)
     exec u:r:recovery:s0 root root -- /system/bin/zinitix_touch.sh
+    # OrangeFox's flashlight (OF_FL_PATH1) drives a LED class style
+    # directory: brightness, up to max_brightness. The torch here is
+    # Samsung's rear_flash file instead, which takes 1 for on and 0 for off,
+    # so give OrangeFox a directory where max_brightness is 1 and brightness
+    # is rear_flash, as the a55x tree does. rear_flash only appears once
+    # OrangeFox has loaded leds-sm5714-fled.ko; the link points nowhere
+    # until then.
+    mkdir /tmp/flashlight 0755 root root
+    write /tmp/flashlight/max_brightness 1
+    symlink /sys/class/camera/flash/rear_flash /tmp/flashlight/brightness
 
 on fs && property:ro.debuggable=0
     # distinguish USB shoulde connect or not, i.e. CDP vs SDP

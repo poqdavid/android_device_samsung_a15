@@ -145,13 +145,15 @@ BUILD_BROKEN_ELF_PREBUILT_PRODUCT_COPY_FILES := true
 DISABLE_ARTIFACT_PATH_REQUIREMENTS := true
 
 # Kernel modules from vendor_dlkm
-# The stock recovery module set has no touchscreen driver and no SoC
-# temperature sensor (soc_temp_lvts.ko). These are loaded from the
-# ramdisk's /lib/modules (their dependencies are in modules.dep); the touch
-# drivers fall back to the installed ROM's vendor_dlkm. soc_temp_lvts.ko is
-# loaded before OrangeFox starts, by cpu_temp.sh, and zt7650m_ts.ko by
-# zinitix_touch.sh, so that it finds no firmware to flash.
-TW_LOAD_VENDOR_MODULES := "zt7650m_ts.ko focaltech_ts_ft3418.ko soc_temp_lvts.ko"
+# The stock recovery module set has no touchscreen driver, no SoC
+# temperature sensor (soc_temp_lvts.ko) and no flash LED driver
+# (leds-sm5714-fled.ko, which makes the torch's rear_flash file). These are
+# loaded from the ramdisk's /lib/modules (their dependencies are in
+# modules.dep); the touch drivers fall back to the installed ROM's
+# vendor_dlkm. soc_temp_lvts.ko is loaded before OrangeFox starts, by
+# cpu_temp.sh, and zt7650m_ts.ko by zinitix_touch.sh, so that it finds no
+# firmware to flash.
+TW_LOAD_VENDOR_MODULES := "zt7650m_ts.ko focaltech_ts_ft3418.ko soc_temp_lvts.ko leds-sm5714-fled.ko"
 TW_LOAD_VENDOR_BOOT_MODULES := true
 
 # zinitix_touch.sh turns the display off and on with it before OrangeFox
